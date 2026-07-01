@@ -1,0 +1,36 @@
+name: Auto Tag Creation
+
+on:
+  push:
+    branches:
+      - '**' # ทำงานเมื่อมีการ Push เข้าสู่ทุกกิ่ง (All Branches)
+
+permissions:
+  contents: write # ให้สิทธิ์เขียนข้อมูลเพื่อปักหมุดและ Push Tag กลับเข้าสู่ GitHub
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Thailand Timezone
+        run: sudo timedatectl set-timezone Asia/Bangkok
+
+      - name: Generate and Push Git Tag
+        run: |
+          # 1. จัดทำรูปแบบชื่อ Tag: [YYYYMMDD]-[BranchName]-[RunNumber]
+          CURRENT_DATE=$(date +'%Y%m%d')
+          # ทำความสะอาดชื่อกิ่งกรณีมีอักขระพิเศษ /
+          CLEAN_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9.-]/_/g')
+          TAG_NAME="${CURRENT_DATE}-${CLEAN_BRANCH}-${{ github.run_number }}"
+          echo "กำลังดำเนินการสร้าง Tag: ${TAG_NAME}"
+          
+          # 2. ตั้งค่าตัวตนผู้เขียนประวัติชั่วคราว
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # 3. สร้างและดัน Tag ขึ้น GitHub ปลายทาง
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"

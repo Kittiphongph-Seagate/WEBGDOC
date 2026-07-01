@@ -453,6 +453,582 @@ const COMMANDS = {
   }
 };
 
+
+function GitBranchGraphVisualizer() {
+  const [commits, setCommits] = React.useState([
+    { id: "c0", label: "c0", hash: "a1d9c72", message: "initial commit", branch: "main", x: 45, y: 55, parents: [] },
+    { id: "c1", label: "c1", hash: "f8e5f22", message: "add configuration", branch: "main", x: 115, y: 55, parents: ["c0"] }
+  ]);
+  const [branches, setBranches] = React.useState({
+    main: "c1"
+  });
+  const [currentBranch, setCurrentBranch] = React.useState("main");
+  const [branchTracks, setBranchTracks] = React.useState({
+    main: 0
+  });
+  const [newBranchName, setNewBranchName] = React.useState("feature/auth");
+  const [commitMessage, setCommitMessage] = React.useState("feat: add login page");
+  const [selectedBranch, setSelectedBranch] = React.useState("");
+  const [consoleLogs, setConsoleLogs] = React.useState([
+    "$ git init",
+    "Initialized empty Git repository in C:/projects/my-web-app/.git/",
+    "$ git commit -m 'initial commit'",
+    "[main (root-commit) a1d9c72] initial commit",
+    "$ git commit -m 'add configuration'",
+    "[main f8e5f22] add configuration"
+  ]);
+
+  const getTrackColor = (trackIndex) => {
+    const colors = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#EC4899", "#8B5CF6"];
+    return colors[trackIndex % colors.length];
+  };
+
+  const generateHash = () => {
+    return Math.random().toString(16).substring(2, 9);
+  };
+
+  const getHistory = (commitId) => {
+    const list = [];
+    const queue = [commitId];
+    const visited = new Set();
+    while (queue.length > 0) {
+      const curr = queue.shift();
+      if (!curr || visited.has(curr)) continue;
+      visited.add(curr);
+      list.push(curr);
+      const commit = commits.find(c => c.id === curr);
+      if (commit && commit.parents) {
+        queue.push(...commit.parents);
+      }
+    }
+    return list;
+  };
+
+  const handleCommit = () => {
+    const latestId = branches[currentBranch];
+    const latestCommit = commits.find(c => c.id === latestId);
+    const newId = "c_" + generateHash();
+    const hash = generateHash();
+    const nextX = (latestCommit ? latestCommit.x : 45) + 70;
+    const trackIdx = branchTracks[currentBranch] !== undefined ? branchTracks[currentBranch] : 0;
+    const nextY = 55 + trackIdx * 65;
+
+    const newCommitObj = {
+      id: newId,
+      label: "c" + commits.filter(c => !c.orphaned).length,
+      hash: hash,
+      message: commitMessage,
+      branch: currentBranch,
+      x: nextX,
+      y: nextY,
+      parents: latestId ? [latestId] : []
+    };
+
+    setCommits(prev => [...prev, newCommitObj]);
+    setBranches(prev => ({ ...prev, [currentBranch]: newId }));
+    setConsoleLogs(prev => [
+      ...prev,
+      `$ git commit -m "${commitMessage}"`,
+      `[${currentBranch} ${hash.substring(0, 7)}] ${commitMessage}`
+    ]);
+  };
+
+  const handleCreateBranch = () => {
+    const name = newBranchName.trim();
+    if (!name) return;
+    if (branches[name]) {
+      alert("Branch already exists!");
+      return;
+    }
+    
+    const existingTracks = Object.values(branchTracks);
+    const nextTrack = existingTracks.length > 0 ? Math.max(...existingTracks) + 1 : 1;
+
+    setBranches(prev => ({ ...prev, [name]: branches[currentBranch] }));
+    setBranchTracks(prev => ({ ...prev, [name]: nextTrack }));
+    setSelectedBranch(name);
+    setConsoleLogs(prev => [
+      ...prev,
+      `$ git branch ${name}`,
+      `Branch '${name}' created at commit ${commits.find(c => c.id === branches[currentBranch]).hash.substring(0, 7)}`
+    ]);
+  };
+
+  const handleCheckout = (branchName) => {
+    if (!branchName || !branches[branchName]) return;
+    setCurrentBranch(branchName);
+    setConsoleLogs(prev => [
+      ...prev,
+      `$ git checkout ${branchName}`,
+      `Switched to branch '${branchName}'`
+    ]);
+  };
+
+  const handleMerge = (target) => {
+    if (!target || target === currentBranch) return;
+    const currentLatestId = branches[currentBranch];
+    const targetLatestId = branches[target];
+    if (!currentLatestId || !targetLatestId) return;
+
+    const currentHistory = getHistory(currentLatestId);
+    if (currentHistory.includes(targetLatestId)) {
+      setConsoleLogs(prev => [
+        ...prev,
+        `$ git merge ${target}`,
+        "Already up to date."
+      ]);
+      return;
+    }
+
+    const newId = "c_" + generateHash();
+    const hash = generateHash();
+    const currentLatest = commits.find(c => c.id === currentLatestId);
+    const targetLatest = commits.find(c => c.id === targetLatestId);
+    const nextX = Math.max(currentLatest.x, targetLatest.x) + 70;
+    const trackIdx = branchTracks[currentBranch] !== undefined ? branchTracks[currentBranch] : 0;
+    const nextY = 55 + trackIdx * 65;
+
+    const newCommitObj = {
+      id: newId,
+      label: "c" + commits.filter(c => !c.orphaned).length,
+      hash: hash,
+      message: `Merge branch '${target}' into ${currentBranch}`,
+      branch: currentBranch,
+      x: nextX,
+      y: nextY,
+      parents: [currentLatestId, targetLatestId]
+    };
+
+    setCommits(prev => [...prev, newCommitObj]);
+    setBranches(prev => ({ ...prev, [currentBranch]: newId }));
+    setConsoleLogs(prev => [
+      ...prev,
+      `$ git merge ${target}`,
+      "Merge made by the 'recursive' strategy.",
+      `[${currentBranch} ${hash.substring(0, 7)}] Merge branch '${target}' into ${currentBranch}`
+    ]);
+  };
+
+  const handleRebase = (target) => {
+    if (!target || target === currentBranch) return;
+    const currentLatestId = branches[currentBranch];
+    const targetLatestId = branches[target];
+    if (!currentLatestId || !targetLatestId) return;
+
+    const currentHistory = getHistory(currentLatestId);
+    const targetHistory = getHistory(targetLatestId);
+
+    const ancestorId = currentHistory.find(id => targetHistory.includes(id));
+    if (!ancestorId) {
+      alert("No common ancestor found for rebase!");
+      return;
+    }
+
+    const commitsToReplay = [];
+    let curr = currentLatestId;
+    while (curr && curr !== ancestorId) {
+      const commit = commits.find(c => c.id === curr);
+      if (!commit) break;
+      if (!targetHistory.includes(curr)) {
+        commitsToReplay.unshift(commit);
+      }
+      curr = commit.parents[0];
+    }
+
+    if (commitsToReplay.length === 0) {
+      setConsoleLogs(prev => [
+        ...prev,
+        `$ git rebase ${target}`,
+        `Current branch ${currentBranch} is up to date.`
+      ]);
+      return;
+    }
+
+    const replayedIds = commitsToReplay.map(c => c.id);
+    setCommits(prev => prev.map(c => {
+      if (replayedIds.includes(c.id)) {
+        return { ...c, orphaned: true };
+      }
+      return c;
+    }));
+
+    let parentId = targetLatestId;
+    let lastX = commits.find(c => c.id === targetLatestId).x;
+    const trackIdx = branchTracks[currentBranch] !== undefined ? branchTracks[currentBranch] : 1;
+    const targetY = 55 + trackIdx * 65;
+
+    const newReplayedCommits = [];
+    const logEntries = [`$ git rebase ${target}`, "First, rewinding head to replay your work on top of it..."];
+
+    commitsToReplay.forEach((c) => {
+      const newId = "c_" + generateHash();
+      const hash = generateHash();
+      lastX += 70;
+      
+      newReplayedCommits.push({
+        id: newId,
+        label: c.label + "'",
+        hash: hash,
+        message: c.message,
+        branch: currentBranch,
+        x: lastX,
+        y: targetY,
+        parents: [parentId]
+      });
+
+      logEntries.push(`Applying: ${c.message}`);
+      parentId = newId;
+    });
+
+    setCommits(prev => [...prev, ...newReplayedCommits]);
+    setBranches(prev => ({ ...prev, [currentBranch]: parentId }));
+    setConsoleLogs(prev => [...prev, ...logEntries]);
+  };
+
+  const handleReset = () => {
+    setCommits([
+      { id: "c0", label: "c0", hash: "a1d9c72", message: "initial commit", branch: "main", x: 45, y: 55, parents: [] },
+      { id: "c1", label: "c1", hash: "f8e5f22", message: "add configuration", branch: "main", x: 115, y: 55, parents: ["c0"] }
+    ]);
+    setBranches({ main: "c1" });
+    setCurrentBranch("main");
+    setBranchTracks({ main: 0 });
+    setSelectedBranch("");
+    setConsoleLogs([
+      "$ git init",
+      "Initialized empty Git repository in C:/projects/my-web-app/.git/",
+      "$ git commit -m 'initial commit'",
+      "[main (root-commit) a1d9c72] initial commit",
+      "$ git commit -m 'add configuration'",
+      "[main f8e5f22] add configuration"
+    ]);
+  };
+
+  const getPath = (p, c) => {
+    if (p.y === c.y) {
+      return `M ${p.x} ${p.y} L ${c.x} ${c.y}`;
+    } else {
+      const midX = (p.x + c.x) / 2;
+      return `M ${p.x} ${p.y} C ${midX} ${p.y}, ${midX} ${c.y}, ${c.x} ${c.y}`;
+    }
+  };
+
+  const maxX = Math.max(...commits.map(c => c.x), 400);
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 overflow-hidden text-slate-800">
+      {/* Left panel: Actions */}
+      <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-3 rounded-xl border border-white/50 bg-white/20 p-4 backdrop-blur-3xl shadow-xl overflow-y-auto no-scrollbar">
+        <div className="text-[10px] font-black text-indigo-900 uppercase tracking-widest pb-1.5 border-b border-slate-300/10">
+          ⚙️ Git Branching Commands
+        </div>
+
+        {/* Current branch status */}
+        <div className="bg-slate-900/10 rounded-lg p-2.5 border border-white/40 flex items-center justify-between">
+          <div className="text-[9.5px] font-extrabold text-slate-700">Active Branch:</div>
+          <span className="bg-emerald-500 text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded shadow">
+            ★ {currentBranch}
+          </span>
+        </div>
+
+        {/* Action: Commit */}
+        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+          <div className="text-[9.5px] font-extrabold text-slate-800">1. บันทึกคอมมิตประวัติงาน (Commit)</div>
+          <input
+            type="text"
+            value={commitMessage}
+            onChange={(e) => setCommitMessage(e.target.value)}
+            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            placeholder="Commit message..."
+          />
+          <button
+            onClick={handleCommit}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+          >
+            git commit -m "{commitMessage.substring(0, 15)}..."
+          </button>
+        </div>
+
+        {/* Action: Create Branch */}
+        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+          <div className="text-[9.5px] font-extrabold text-slate-800">2. แตกสาขากิ่งทำงานใหม่ (Create Branch)</div>
+          <input
+            type="text"
+            value={newBranchName}
+            onChange={(e) => setNewBranchName(e.target.value)}
+            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            placeholder="Branch name..."
+          />
+          <button
+            onClick={handleCreateBranch}
+            className="w-full bg-sky-600 hover:bg-sky-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+          >
+            git branch {newBranchName}
+          </button>
+        </div>
+
+        {/* Action: Switch Branch */}
+        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+          <div className="text-[9.5px] font-extrabold text-slate-800">3. สลับสาขากิ่งที่เลือก (Checkout)</div>
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">-- เลือกกิ่งสาขา --</option>
+            {Object.keys(branches).map(b => (
+              <option key={b} value={b}>{b} {b === currentBranch ? "(active)" : ""}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => handleCheckout(selectedBranch)}
+            disabled={!selectedBranch}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+          >
+            git checkout {selectedBranch || "..."}
+          </button>
+        </div>
+
+        {/* Action: Merge */}
+        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+          <div className="text-[9.5px] font-extrabold text-slate-800">4. รวมงานจากกิ่งอื่นเข้าสู่กิ่งหลัก (Merge)</div>
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">-- เลือกกิ่งสาขา --</option>
+            {Object.keys(branches).map(b => (
+              <option key={b} value={b}>{b} {b === currentBranch ? "(active)" : ""}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => handleMerge(selectedBranch)}
+            disabled={!selectedBranch || selectedBranch === currentBranch}
+            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+          >
+            git merge {selectedBranch || "..."}
+          </button>
+        </div>
+
+        {/* Action: Rebase */}
+        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+          <div className="text-[9.5px] font-extrabold text-slate-800">5. ย้ายฐานประวัติต่อยอดกิ่ง (Rebase)</div>
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">-- เลือกกิ่งสาขา --</option>
+            {Object.keys(branches).map(b => (
+              <option key={b} value={b}>{b} {b === currentBranch ? "(active)" : ""}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => handleRebase(selectedBranch)}
+            disabled={!selectedBranch || selectedBranch === currentBranch}
+            className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+          >
+            git rebase {selectedBranch || "..."}
+          </button>
+        </div>
+
+        {/* Reset button */}
+        <button
+          onClick={handleReset}
+          className="mt-auto w-full bg-rose-600 hover:bg-rose-700 text-white font-mono font-bold text-[9.5px] py-2 rounded transition shadow-lg flex items-center justify-center gap-1.5"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> ล้างหน้าจอจำลอง (Reset)
+        </button>
+      </div>
+
+      {/* Right panel: Visualization Canvas and Terminal */}
+      <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden">
+        
+        {/* SVG Graph Canvas Card */}
+        <div className="rounded-xl flex-1 min-h-0 bg-white/20 border border-white/50 shadow-xl backdrop-blur-3xl p-5 flex flex-col justify-between overflow-hidden relative">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-300/10 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4.5 w-4.5 text-indigo-600" />
+              <span className="text-xs font-mono font-black text-slate-800">Git History Graph</span>
+            </div>
+            <div className="text-[8.5px] font-mono text-indigo-400 bg-indigo-950/60 px-2.5 py-1 rounded border border-indigo-800/30">
+              Interactive sandbox
+            </div>
+          </div>
+
+          {/* SVG Scrollable Wrapper */}
+          <div className="flex-1 overflow-x-auto overflow-y-hidden my-4 rounded-xl border border-slate-200/50 bg-slate-950/70 p-4 min-h-[240px] flex items-center">
+            <svg width={maxX + 120} height="280" className="mx-auto">
+              <defs>
+                <filter id="glow-indigo" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              {/* Connecting Lines */}
+              {commits.map((c) => {
+                return c.parents.map((pId) => {
+                  const p = commits.find(x => x.id === pId);
+                  if (!p) return null;
+                  const trackIdx = branchTracks[c.branch] !== undefined ? branchTracks[c.branch] : 0;
+                  const color = getTrackColor(trackIdx);
+                  return (
+                    <path
+                      key={`${p.id}-${c.id}`}
+                      d={getPath(p, c)}
+                      stroke={color}
+                      strokeWidth="3.5"
+                      fill="none"
+                      opacity={c.orphaned || p.orphaned ? 0.25 : 0.8}
+                    />
+                  );
+                });
+              })}
+
+              {/* Commit Nodes & Labels */}
+              {commits.map((c) => {
+                const trackIdx = branchTracks[c.branch] !== undefined ? branchTracks[c.branch] : 0;
+                const color = getTrackColor(trackIdx);
+                const isCurrentHead = Object.values(branches).includes(c.id);
+                const heads = Object.entries(branches).filter(([name, id]) => id === c.id).map(([name]) => name);
+
+                return (
+                  <g key={c.id}>
+                    {/* Pulsing HEAD ring */}
+                    {isCurrentHead && heads.includes(currentBranch) && (
+                      <motion.circle
+                        cx={c.x}
+                        cy={c.y}
+                        r={18}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="2"
+                        animate={{ scale: [1, 1.45], opacity: [0.6, 0] }}
+                        transition={{ duration: 1.3, repeat: Infinity }}
+                      />
+                    )}
+
+                    {/* Commit circle node */}
+                    <circle
+                      cx={c.x}
+                      cy={c.y}
+                      r={heads.includes(currentBranch) ? 11.5 : 8.5}
+                      fill={color}
+                      stroke="#0F172A"
+                      strokeWidth="2.5"
+                      className="cursor-pointer transition hover:scale-110"
+                      opacity={c.orphaned ? 0.3 : 1}
+                      title={`Commit: ${c.hash.substring(0, 7)}\nMessage: ${c.message}\nBranch: ${c.branch}`}
+                    />
+
+                    {/* Commit index text inside node */}
+                    <text
+                      x={c.x}
+                      y={c.y + 3.5}
+                      textAnchor="middle"
+                      fill="#FFF"
+                      fontSize="7"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none"
+                      opacity={c.orphaned ? 0.3 : 1}
+                    >
+                      {c.label}
+                    </text>
+
+                    {/* Commit Hash underneath */}
+                    <text
+                      x={c.x}
+                      y={c.y + 22}
+                      textAnchor="middle"
+                      fill="#94A3B8"
+                      fontSize="7"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none"
+                      opacity={c.orphaned ? 0.3 : 0.8}
+                    >
+                      {c.hash.substring(0, 7)}
+                    </text>
+
+                    {/* Branch Head labels stacked above commit node */}
+                    {heads.map((bName, bIdx) => {
+                      const isCurrent = bName === currentBranch;
+                      return (
+                        <g key={bName} transform={`translate(${c.x}, ${c.y - 18 - bIdx * 15})`}>
+                          {/* Label Badge Background */}
+                          <rect
+                            x="-28"
+                            y="-6.5"
+                            width="56"
+                            height="12"
+                            rx="2"
+                            fill={isCurrent ? "#10B981" : "#334155"}
+                            stroke={isCurrent ? "#34C759" : "#475569"}
+                            strokeWidth="1.2"
+                            className="shadow"
+                          />
+                          {/* Label Text */}
+                          <text
+                            x="0"
+                            y="2"
+                            textAnchor="middle"
+                            fill="#FFF"
+                            fontSize="6.5"
+                            fontFamily="sans-serif"
+                            fontWeight="extrabold"
+                            className="pointer-events-none select-none"
+                          >
+                            {isCurrent ? `★ ${bName}` : bName}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          <div className="text-[10px] text-slate-500 font-bold leading-normal select-none">
+            💡 **คำแนะนำ:** คลิกปุ่มฝั่งซ้ายเพื่อทำคอมมิต แตกกิ่ง สลับกิ่ง และทดสอบ Merge หรือ Rebase แบบสดๆ ได้ทันที!
+          </div>
+        </div>
+
+        {/* Terminal Log Console */}
+        <div className="h-[175px] rounded-xl border border-slate-900 bg-[#090A14] p-4 flex flex-col shadow-2xl flex-shrink-0 overflow-hidden relative">
+          <div className="text-indigo-400 font-mono font-bold text-[10px] border-b border-white/5 pb-2 mb-2 flex items-center justify-between select-none">
+            <span className="flex items-center gap-1.5"><Terminal className="h-4 w-4" /> Git Console Terminal Logs</span>
+            <span className="text-[8px] text-slate-500">Read-Only</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto font-mono text-[10.5px] text-slate-355 space-y-1 pr-1.5 leading-relaxed text-left select-text">
+            {consoleLogs.map((log, idx) => {
+              let color = "text-slate-300";
+              if (log.startsWith("$")) {
+                color = "text-emerald-400 font-bold";
+              } else if (log.includes("WIP") || log.includes("First,")) {
+                color = "text-indigo-350";
+              } else if (log.includes("commit") || log.includes("Switched")) {
+                color = "text-sky-400";
+              }
+              return (
+                <div key={idx} className={color}>
+                  {log}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [viewMode, setViewMode] = useState("simulator"); // "simulator" or "guide"
   const [selectedCategory, setSelectedCategory] = useState("1. การตั้งค่า (Configuration)");

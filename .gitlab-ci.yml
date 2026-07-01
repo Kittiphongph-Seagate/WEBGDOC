@@ -1,22 +1,28 @@
 stages:
-  - release
+  - auto-tag
 
-auto_tag:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/cli:latest
-  rules:
-    # ป้องกันไม่ให้ job รันซ้ำตอน pipeline ที่เกิดจาก tag
-    - if: '$CI_COMMIT_TAG'
-      when: never
-
-    # ให้รันเฉพาะตอน push/merge เข้า default branch เช่น main
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
+job_create_tag:
+  stage: auto-tag
+  image: alpine:latest
+  before_script:
+    # ติดตั้ง curl และปรับโซนเวลาของระบบเป็นกรุงเทพฯ (GMT+7)
+    - apk add --no-cache curl tzdata
+    - cp /usr/share/zoneinfo/Asia/Bangkok /etc/localtime
+    - echo "Asia/Bangkok" > /etc/timezone
   script:
-    - echo "Creating auto tag..."
-
-  release:
-    tag_name: "v0.$CI_PIPELINE_IID"
-    name: "Release v0.$CI_PIPELINE_IID"
-    description: "Auto release from commit $CI_COMMIT_SHA"
-    ref: "$CI_COMMIT_SHA"
+    # 1. จัดทำรูปแบบชื่อ Tag: [YYYYMMDD]-[BranchName]-[PipelineRunNumber]
+    - CURRENT_DATE=$(date +'%Y%m%d')
+    - TAG_NAME="${CURRENT_DATE}-${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_IID}"
+    - echo "กำลังเตรียมสร้าง Tag ใหม่ => ${TAG_NAME}"
+    
+    # 2. ส่งคำสั่งสร้าง Tag ไปยัง GitLab API
+    - |
+      curl --request POST \
+        --header "PRIVATE-TOKEN: ${GITLAB_API_TOKEN}" \
+        --data "tag_name=${TAG_NAME}" \
+        --data "ref=${CI_COMMIT_SHA}" \
+        --data "message=สร้างป้ายกำกับอัตโนมัติจาก GitLab CI Pipeline ครั้งที่ #${CI_PIPELINE_IID}" \
+        "https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/repository/tags"
+  rules:
+    # กำหนดให้ทำงานเมื่อมีการ Push เข้าสู่ทุกกิ่ง (All Branches)
+    - if: $CI_COMMIT_BRANCH

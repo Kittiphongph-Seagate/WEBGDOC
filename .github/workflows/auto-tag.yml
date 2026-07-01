@@ -22,9 +22,11 @@ jobs:
         run: |
           # 1. จัดทำรูปแบบชื่อ Tag: [YYYYMMDD]-[BranchName]-[RunNumber]
           CURRENT_DATE=$(date +'%Y%m%d')
-          # ทำความสะอาดชื่อกิ่งกรณีมีอักขระพิเศษ /
           CLEAN_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9.-]/_/g')
           TAG_NAME="${CURRENT_DATE}-${CLEAN_BRANCH}-${{ github.run_number }}"
+          
+          # ส่งค่าชื่อ Tag ไปเก็บไว้ในสภาพแวดล้อมระบบเพื่อเอาไปใช้ต่อในขั้นตอนอื่น
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
           echo "กำลังดำเนินการสร้าง Tag: ${TAG_NAME}"
           
           # 2. ตั้งค่าตัวตนผู้เขียนประวัติชั่วคราว
@@ -34,3 +36,17 @@ jobs:
           # 3. สร้างและดัน Tag ขึ้น GitHub ปลายทาง
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
+
+      - name: Create ZIP Archive of Code
+        run: |
+          echo "📦 เริ่มต้นกระบวนการบีบอัดโค้ดสำหรับแท็กเวอร์ชัน ${{ env.TAG_NAME }}..."
+          # บีบอัดไฟล์ทั้งหมดในโฟลเดอร์โดยยกเว้นโฟลเดอร์ไฟล์ประวัติ .git และไฟล์ขยะ node_modules
+          zip -r "release-${{ env.TAG_NAME }}.zip" . -x "*.git*" "*node_modules*"
+          echo "✓ บีบอัดไฟล์ release-${{ env.TAG_NAME }}.zip สำเร็จ!"
+
+      - name: Upload ZIP to GitHub Actions Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ env.TAG_NAME }}
+          path: release-${{ env.TAG_NAME }}.zip
+          retention-days: 7 # จะลบออกเพื่อประหยัดพื้นที่คลาวด์ใน 7 วัน

@@ -469,6 +469,7 @@ function GitBranchGraphVisualizer() {
   const [newBranchName, setNewBranchName] = React.useState("feature/auth");
   const [commitMessage, setCommitMessage] = React.useState("feat: add login page");
   const [selectedBranch, setSelectedBranch] = React.useState("");
+  const [terminalInput, setTerminalInput] = React.useState("");
   const [consoleLogs, setConsoleLogs] = React.useState([
     "$ git init",
     "Initialized empty Git repository in C:/projects/my-web-app/.git/",
@@ -477,6 +478,14 @@ function GitBranchGraphVisualizer() {
     "$ git commit -m 'add configuration'",
     "[main f8e5f22] add configuration"
   ]);
+
+  const scrollRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [consoleLogs]);
 
   const getTrackColor = (trackIndex) => {
     const colors = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#EC4899", "#8B5CF6"];
@@ -504,79 +513,120 @@ function GitBranchGraphVisualizer() {
     return list;
   };
 
-  const handleCommit = () => {
+  // Helper action: Commit
+  const doCommit = (msg) => {
     const latestId = branches[currentBranch];
-    const latestCommit = commits.find(c => c.id === latestId);
+    const isDetached = !branches[currentBranch];
+    const actualLatestId = isDetached ? currentBranch : latestId;
+    const latestCommit = commits.find(c => c.id === actualLatestId);
+    
     const newId = "c_" + generateHash();
     const hash = generateHash();
     const nextX = (latestCommit ? latestCommit.x : 45) + 70;
-    const trackIdx = branchTracks[currentBranch] !== undefined ? branchTracks[currentBranch] : 0;
+    
+    let trackIdx = 0;
+    let bName = currentBranch;
+    if (isDetached) {
+      trackIdx = 0;
+      bName = "detached";
+    } else {
+      trackIdx = branchTracks[currentBranch] !== undefined ? branchTracks[currentBranch] : 0;
+    }
     const nextY = 55 + trackIdx * 65;
 
     const newCommitObj = {
       id: newId,
       label: "c" + commits.filter(c => !c.orphaned).length,
       hash: hash,
-      message: commitMessage,
-      branch: currentBranch,
+      message: msg,
+      branch: bName,
       x: nextX,
       y: nextY,
-      parents: latestId ? [latestId] : []
+      parents: actualLatestId ? [actualLatestId] : []
     };
 
     setCommits(prev => [...prev, newCommitObj]);
-    setBranches(prev => ({ ...prev, [currentBranch]: newId }));
-    setConsoleLogs(prev => [
-      ...prev,
-      `$ git commit -m "${commitMessage}"`,
-      `[${currentBranch} ${hash.substring(0, 7)}] ${commitMessage}`
-    ]);
+    
+    if (isDetached) {
+      setCurrentBranch(newId);
+      setConsoleLogs(prev => [
+        ...prev,
+        `[detached HEAD ${hash.substring(0, 7)}] ${msg}`,
+        "Note: you are still in detached HEAD state."
+      ]);
+    } else {
+      setBranches(prev => ({ ...prev, [currentBranch]: newId }));
+      setConsoleLogs(prev => [
+        ...prev,
+        `[${currentBranch} ${hash.substring(0, 7)}] ${msg}`
+      ]);
+    }
   };
 
-  const handleCreateBranch = () => {
-    const name = newBranchName.trim();
-    if (!name) return;
-    if (branches[name]) {
-      alert("Branch already exists!");
+  // Helper action: Create Branch
+  const doCreateBranch = (name, shouldCheckout = false) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (branches[trimmed]) {
+      setConsoleLogs(prev => [...prev, `fatal: A branch named '${trimmed}' already exists.`]);
       return;
     }
-    
+
+    const currentLatestId = branches[currentBranch] || currentBranch;
     const existingTracks = Object.values(branchTracks);
     const nextTrack = existingTracks.length > 0 ? Math.max(...existingTracks) + 1 : 1;
 
-    setBranches(prev => ({ ...prev, [name]: branches[currentBranch] }));
-    setBranchTracks(prev => ({ ...prev, [name]: nextTrack }));
-    setSelectedBranch(name);
+    setBranches(prev => ({ ...prev, [trimmed]: currentLatestId }));
+    setBranchTracks(prev => ({ ...prev, [trimmed]: nextTrack }));
+    
     setConsoleLogs(prev => [
       ...prev,
-      `$ git branch ${name}`,
-      `Branch '${name}' created at commit ${commits.find(c => c.id === branches[currentBranch]).hash.substring(0, 7)}`
+      `Branch '${trimmed}' created at commit ${commits.find(c => c.id === currentLatestId)?.hash.substring(0, 7) || "root"}`
     ]);
+
+    if (shouldCheckout) {
+      setCurrentBranch(trimmed);
+      setConsoleLogs(prev => [...prev, `Switched to branch '${trimmed}'`]);
+    }
   };
 
-  const handleCheckout = (branchName) => {
-    if (!branchName || !branches[branchName]) return;
-    setCurrentBranch(branchName);
-    setConsoleLogs(prev => [
-      ...prev,
-      `$ git checkout ${branchName}`,
-      `Switched to branch '${branchName}'`
-    ]);
+  // Helper action: Checkout
+  const doCheckout = (target) => {
+    if (branches[target]) {
+      setCurrentBranch(target);
+      setConsoleLogs(prev => [...prev, `Switched to branch '${target}'`]);
+    } else {
+      const commit = commits.find(c => c.id === target || c.hash.startsWith(target));
+      if (commit) {
+        setCurrentBranch(commit.id);
+        setConsoleLogs(prev => [
+          ...prev,
+          `Note: switching to '${target}' (detached HEAD)`,
+          `You are in 'detached HEAD' state. HEAD is now at ${commit.hash.substring(0, 7)}...`
+        ]);
+      } else {
+        setConsoleLogs(prev => [...prev, `error: pathspec '${target}' did not match any file(s) known to git`]);
+      }
+    }
   };
 
-  const handleMerge = (target) => {
-    if (!target || target === currentBranch) return;
+  // Helper action: Merge
+  const doMerge = (target) => {
+    if (target === currentBranch) {
+      setConsoleLogs(prev => [...prev, "Already up to date."]);
+      return;
+    }
+    
     const currentLatestId = branches[currentBranch];
     const targetLatestId = branches[target];
-    if (!currentLatestId || !targetLatestId) return;
+    if (!currentLatestId || !targetLatestId) {
+      setConsoleLogs(prev => [...prev, "fatal: cannot merge in detached HEAD state or invalid branch."]);
+      return;
+    }
 
     const currentHistory = getHistory(currentLatestId);
     if (currentHistory.includes(targetLatestId)) {
-      setConsoleLogs(prev => [
-        ...prev,
-        `$ git merge ${target}`,
-        "Already up to date."
-      ]);
+      setConsoleLogs(prev => [...prev, "Already up to date."]);
       return;
     }
 
@@ -603,24 +653,31 @@ function GitBranchGraphVisualizer() {
     setBranches(prev => ({ ...prev, [currentBranch]: newId }));
     setConsoleLogs(prev => [
       ...prev,
-      `$ git merge ${target}`,
       "Merge made by the 'recursive' strategy.",
       `[${currentBranch} ${hash.substring(0, 7)}] Merge branch '${target}' into ${currentBranch}`
     ]);
   };
 
-  const handleRebase = (target) => {
-    if (!target || target === currentBranch) return;
+  // Helper action: Rebase
+  const doRebase = (target) => {
+    if (target === currentBranch) {
+      setConsoleLogs(prev => [...prev, "Current branch is up to date."]);
+      return;
+    }
+    
     const currentLatestId = branches[currentBranch];
     const targetLatestId = branches[target];
-    if (!currentLatestId || !targetLatestId) return;
+    if (!currentLatestId || !targetLatestId) {
+      setConsoleLogs(prev => [...prev, "fatal: cannot rebase in detached HEAD state or invalid branch."]);
+      return;
+    }
 
     const currentHistory = getHistory(currentLatestId);
     const targetHistory = getHistory(targetLatestId);
 
     const ancestorId = currentHistory.find(id => targetHistory.includes(id));
     if (!ancestorId) {
-      alert("No common ancestor found for rebase!");
+      setConsoleLogs(prev => [...prev, "fatal: no common ancestor found for rebase."]);
       return;
     }
 
@@ -636,11 +693,7 @@ function GitBranchGraphVisualizer() {
     }
 
     if (commitsToReplay.length === 0) {
-      setConsoleLogs(prev => [
-        ...prev,
-        `$ git rebase ${target}`,
-        `Current branch ${currentBranch} is up to date.`
-      ]);
+      setConsoleLogs(prev => [...prev, `Current branch ${currentBranch} is up to date.`]);
       return;
     }
 
@@ -658,7 +711,7 @@ function GitBranchGraphVisualizer() {
     const targetY = 55 + trackIdx * 65;
 
     const newReplayedCommits = [];
-    const logEntries = [`$ git rebase ${target}`, "First, rewinding head to replay your work on top of it..."];
+    const logEntries = ["First, rewinding head to replay your work on top of it..."];
 
     commitsToReplay.forEach((c) => {
       const newId = "c_" + generateHash();
@@ -685,7 +738,8 @@ function GitBranchGraphVisualizer() {
     setConsoleLogs(prev => [...prev, ...logEntries]);
   };
 
-  const handleReset = () => {
+  // Helper action: Reset Hard
+  const doResetHard = () => {
     setCommits([
       { id: "c0", label: "c0", hash: "a1d9c72", message: "initial commit", branch: "main", x: 45, y: 55, parents: [] },
       { id: "c1", label: "c1", hash: "f8e5f22", message: "add configuration", branch: "main", x: 115, y: 55, parents: ["c0"] }
@@ -695,21 +749,120 @@ function GitBranchGraphVisualizer() {
     setBranchTracks({ main: 0 });
     setSelectedBranch("");
     setConsoleLogs([
-      "$ git init",
       "Initialized empty Git repository in C:/projects/my-web-app/.git/",
-      "$ git commit -m 'initial commit'",
-      "[main (root-commit) a1d9c72] initial commit",
-      "$ git commit -m 'add configuration'",
-      "[main f8e5f22] add configuration"
+      "HEAD is now at f8e5f22 add configuration"
     ]);
   };
 
-  const getPath = (p, c) => {
-    if (p.y === c.y) {
-      return `M ${p.x} ${p.y} L ${c.x} ${c.y}`;
-    } else {
-      const midX = (p.x + c.x) / 2;
-      return `M ${p.x} ${p.y} C ${midX} ${p.y}, ${midX} ${c.y}, ${c.x} ${c.y}`;
+  // Terminal submission handler
+  const handleTerminalSubmit = (e) => {
+    e.preventDefault();
+    const rawInput = terminalInput.trim();
+    if (!rawInput) return;
+    setTerminalInput("");
+
+    // Add to console logs
+    setConsoleLogs(prev => [...prev, `$ ${rawInput}`]);
+
+    const cmd = rawInput.replace(/\s+/g, ' ');
+    const parts = cmd.split(' ');
+
+    if (parts[0] !== 'git' && cmd !== 'clear' && cmd !== 'clean') {
+      setConsoleLogs(prev => [
+        ...prev,
+        `bash: command not found: ${parts[0]}`,
+        "(คำสั่งต้องขึ้นต้นด้วย git หรือพิมพ์ clear)"
+      ]);
+      return;
+    }
+
+    if (cmd === 'clear' || cmd === 'clean') {
+      setConsoleLogs([]);
+      return;
+    }
+
+    const action = parts[1];
+    
+    if (action === 'commit') {
+      let msg = "feat: work on progress";
+      const mIdx = cmd.indexOf('-m ');
+      if (mIdx !== -1) {
+        const rest = cmd.substring(mIdx + 3).trim();
+        if ((rest.startsWith('"') && rest.endsWith('"')) || (rest.startsWith("'") && rest.endsWith("'"))) {
+          msg = rest.substring(1, rest.length - 1);
+        } else {
+          msg = rest;
+        }
+      }
+      doCommit(msg);
+    } 
+    else if (action === 'branch') {
+      const bName = parts[2];
+      if (!bName) {
+        setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git branch <branch-name>"]);
+        return;
+      }
+      doCreateBranch(bName);
+    } 
+    else if (action === 'checkout') {
+      const arg = parts[2];
+      if (!arg) {
+        setConsoleLogs(prev => [...prev, "fatal: branch or commit hash required", "usage: git checkout <branch-name>"]);
+        return;
+      }
+      if (arg === '-b') {
+        const newBName = parts[3];
+        if (!newBName) {
+          setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git checkout -b <branch-name>"]);
+          return;
+        }
+        doCreateBranch(newBName, true);
+      } else {
+        doCheckout(arg);
+      }
+    }
+    else if (action === 'switch') {
+      const arg = parts[2];
+      if (!arg) {
+        setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git switch <branch-name>"]);
+        return;
+      }
+      if (arg === '-c') {
+        const newBName = parts[3];
+        if (!newBName) {
+          setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git switch -c <branch-name>"]);
+          return;
+        }
+        doCreateBranch(newBName, true);
+      } else {
+        doCheckout(arg);
+      }
+    }
+    else if (action === 'merge') {
+      const target = parts[2];
+      if (!target) {
+        setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git merge <branch-name>"]);
+        return;
+      }
+      doMerge(target);
+    }
+    else if (action === 'rebase') {
+      const target = parts[2];
+      if (!target) {
+        setConsoleLogs(prev => [...prev, "fatal: branch name required", "usage: git rebase <branch-name>"]);
+        return;
+      }
+      doRebase(target);
+    }
+    else if (action === 'reset' && parts[2] === '--hard') {
+      doResetHard();
+    }
+    else {
+      setConsoleLogs(prev => [
+        ...prev,
+        `git: '${action}' is not a recognized git command.`,
+        "คำสั่งที่รองรับ: commit, branch, checkout, switch, merge, rebase, reset --hard"
+      ]);
     }
   };
 
@@ -742,7 +895,7 @@ function GitBranchGraphVisualizer() {
             placeholder="Commit message..."
           />
           <button
-            onClick={handleCommit}
+            onClick={() => doCommit(commitMessage)}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
           >
             git commit -m "{commitMessage.substring(0, 15)}..."
@@ -760,7 +913,7 @@ function GitBranchGraphVisualizer() {
             placeholder="Branch name..."
           />
           <button
-            onClick={handleCreateBranch}
+            onClick={() => doCreateBranch(newBranchName)}
             className="w-full bg-sky-600 hover:bg-sky-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
           >
             git branch {newBranchName}
@@ -781,7 +934,7 @@ function GitBranchGraphVisualizer() {
             ))}
           </select>
           <button
-            onClick={() => handleCheckout(selectedBranch)}
+            onClick={() => doCheckout(selectedBranch)}
             disabled={!selectedBranch}
             className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
           >
@@ -803,7 +956,7 @@ function GitBranchGraphVisualizer() {
             ))}
           </select>
           <button
-            onClick={() => handleMerge(selectedBranch)}
+            onClick={() => doMerge(selectedBranch)}
             disabled={!selectedBranch || selectedBranch === currentBranch}
             className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
           >
@@ -825,7 +978,7 @@ function GitBranchGraphVisualizer() {
             ))}
           </select>
           <button
-            onClick={() => handleRebase(selectedBranch)}
+            onClick={() => doRebase(selectedBranch)}
             disabled={!selectedBranch || selectedBranch === currentBranch}
             className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
           >
@@ -835,7 +988,7 @@ function GitBranchGraphVisualizer() {
 
         {/* Reset button */}
         <button
-          onClick={handleReset}
+          onClick={doResetHard}
           className="mt-auto w-full bg-rose-600 hover:bg-rose-700 text-white font-mono font-bold text-[9.5px] py-2 rounded transition shadow-lg flex items-center justify-center gap-1.5"
         >
           <RotateCcw className="h-3.5 w-3.5" /> ล้างหน้าจอจำลอง (Reset)
@@ -891,13 +1044,14 @@ function GitBranchGraphVisualizer() {
               {commits.map((c) => {
                 const trackIdx = branchTracks[c.branch] !== undefined ? branchTracks[c.branch] : 0;
                 const color = getTrackColor(trackIdx);
-                const isCurrentHead = Object.values(branches).includes(c.id);
+                const isCurrentHead = Object.values(branches).includes(c.id) || currentBranch === c.id;
                 const heads = Object.entries(branches).filter(([name, id]) => id === c.id).map(([name]) => name);
+                const isCurrentBranchHead = branches[currentBranch] === c.id || currentBranch === c.id;
 
                 return (
                   <g key={c.id}>
                     {/* Pulsing HEAD ring */}
-                    {isCurrentHead && heads.includes(currentBranch) && (
+                    {isCurrentHead && isCurrentBranchHead && (
                       <motion.circle
                         cx={c.x}
                         cy={c.y}
@@ -914,7 +1068,7 @@ function GitBranchGraphVisualizer() {
                     <circle
                       cx={c.x}
                       cy={c.y}
-                      r={heads.includes(currentBranch) ? 11.5 : 8.5}
+                      r={isCurrentBranchHead ? 11.5 : 8.5}
                       fill={color}
                       stroke="#0F172A"
                       strokeWidth="2.5"
@@ -986,6 +1140,16 @@ function GitBranchGraphVisualizer() {
                         </g>
                       );
                     })}
+
+                    {/* Show HEAD badge directly if detached head is pointing here */}
+                    {!branches[currentBranch] && currentBranch === c.id && (
+                      <g transform={`translate(${c.x}, ${c.y - 18})`}>
+                        <rect x="-28" y="-6.5" width="56" height="12" rx="2" fill="#EF4444" stroke="#F87171" strokeWidth="1.2" className="shadow" />
+                        <text x="0" y="2" textAnchor="middle" fill="#FFF" fontSize="6.5" fontFamily="sans-serif" fontWeight="extrabold" className="pointer-events-none select-none">
+                          ★ HEAD (det)
+                        </text>
+                      </g>
+                    )}
                   </g>
                 );
               })}
@@ -998,13 +1162,14 @@ function GitBranchGraphVisualizer() {
         </div>
 
         {/* Terminal Log Console */}
-        <div className="h-[175px] rounded-xl border border-slate-900 bg-[#090A14] p-4 flex flex-col shadow-2xl flex-shrink-0 overflow-hidden relative">
+        <div className="h-[210px] rounded-xl border border-slate-900 bg-[#090A14] p-4 flex flex-col shadow-2xl flex-shrink-0 overflow-hidden relative">
           <div className="text-indigo-400 font-mono font-bold text-[10px] border-b border-white/5 pb-2 mb-2 flex items-center justify-between select-none">
-            <span className="flex items-center gap-1.5"><Terminal className="h-4 w-4" /> Git Console Terminal Logs</span>
-            <span className="text-[8px] text-slate-500">Read-Only</span>
+            <span className="flex items-center gap-1.5"><Terminal className="h-4 w-4" /> Git Console Terminal Prompt</span>
+            <span className="text-[8px] text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-900/30">Active Shell</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto font-mono text-[10.5px] text-slate-355 space-y-1 pr-1.5 leading-relaxed text-left select-text">
+          {/* Logs scroll area */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto font-mono text-[10.5px] text-slate-355 space-y-1 pr-1.5 leading-relaxed text-left select-text">
             {consoleLogs.map((log, idx) => {
               let color = "text-slate-300";
               if (log.startsWith("$")) {
@@ -1013,6 +1178,8 @@ function GitBranchGraphVisualizer() {
                 color = "text-indigo-350";
               } else if (log.includes("commit") || log.includes("Switched")) {
                 color = "text-sky-400";
+              } else if (log.includes("fatal:") || log.includes("error:")) {
+                color = "text-rose-400 font-semibold";
               }
               return (
                 <div key={idx} className={color}>
@@ -1021,6 +1188,19 @@ function GitBranchGraphVisualizer() {
               );
             })}
           </div>
+
+          {/* Prompt Form */}
+          <form onSubmit={handleTerminalSubmit} className="flex items-center gap-1.5 mt-2 border-t border-white/5 pt-2 flex-shrink-0">
+            <span className="text-emerald-400 font-mono font-extrabold text-[11px] select-none animate-pulse">$</span>
+            <input
+              type="text"
+              value={terminalInput}
+              onChange={(e) => setTerminalInput(e.target.value)}
+              className="flex-1 bg-transparent text-emerald-300 font-mono text-[10.5px] focus:outline-none placeholder-slate-700 font-bold"
+              placeholder="พิมพ์คำสั่ง เช่น git commit -m 'feat: login' หรือ git checkout -b feature"
+              autoFocus
+            />
+          </form>
         </div>
 
       </div>

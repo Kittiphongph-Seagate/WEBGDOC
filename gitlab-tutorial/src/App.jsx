@@ -1172,13 +1172,19 @@ git push -u origin main`}
 function AnimationSandbox({ type, isPlaying, step, params }) {
   
   if (type === "config") {
+    const isConfigured = isPlaying && step > 1;
+    
     return (
-      <div className="flex-1 flex flex-col md:flex-row items-center justify-around gap-6 relative text-white min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-3 relative text-white min-h-0">
         
-        {/* User Card - Less Curved corners */}
+        {/* User Card */}
         <motion.div
-          animate={isPlaying ? { scale: [1, 1.05, 0.98, 1], rotate: [0, 2, -2, 0] } : {}}
-          transition={{ duration: 2 }}
+          animate={{ 
+            scale: isPlaying ? [1, 1.05, 0.98, 1] : 1, 
+            rotate: isPlaying ? [0, 2, -2, 0] : 0,
+            x: isConfigured ? 45 : 0
+          }}
+          transition={{ duration: 1.5, type: "spring", stiffness: 80, damping: 15 }}
           className="rounded-xl border border-white/15 bg-white/5 p-4.5 w-[170px] flex flex-col items-center gap-3 shadow-xl backdrop-blur-md relative flex-shrink-0"
         >
           <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 flex items-center justify-center font-black text-xl shadow-lg border-2 border-white/35 relative">
@@ -1191,31 +1197,54 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
           </div>
         </motion.div>
 
-        {/* Action arrow beam */}
-        <div className="h-0.5 w-[60px] bg-white/10 rounded-full relative hidden md:block flex-shrink-0">
-          {isPlaying && step > 0 && (
-            <motion.div 
-              initial={{ left: 0 }}
-              animate={{ left: "100%" }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute h-2.5 w-2.5 rounded-full bg-indigo-400 -top-[4px] shadow-[0_0_8px_rgb(99,102,241)]"
-            />
+        {/* Action arrow beam (Enlarged Progress Bar) */}
+        <motion.div 
+          animate={{ 
+            opacity: isConfigured ? 0 : 1,
+            scaleX: isConfigured ? 0.3 : 1
+          }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="h-5 bg-white/5 rounded-full relative hidden md:block w-[120px] border border-white/5 overflow-hidden flex-shrink-0"
+        >
+          {isPlaying && (
+            <>
+              {/* Sliding energy dot */}
+              <motion.div 
+                initial={{ left: "-40px" }}
+                animate={{ left: "100%" }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
+              />
+              {/* Flying config key icon */}
+              <motion.div
+                initial={{ left: "-20px", y: 0 }}
+                animate={{ left: "100%", y: [2, -2, 2] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="absolute text-xs select-none"
+              >
+                ⚙️
+              </motion.div>
+            </>
           )}
-        </div>
+        </motion.div>
 
-        {/* Config File - Less Curved corners */}
+        {/* Config File */}
         <motion.div
-          animate={isPlaying && step > 1 ? { scale: [1, 1.03, 1], borderColor: ["rgba(255,255,255,0.15)", "rgba(52,199,89,0.4)", "rgba(255,255,255,0.15)"] } : {}}
-          transition={{ duration: 1 }}
+          animate={{ 
+            scale: isConfigured ? [1, 1.03, 1] : 1, 
+            borderColor: isConfigured ? ["rgba(255,255,255,0.15)", "rgba(52,199,89,0.4)", "rgba(255,255,255,0.15)"] : "rgba(255,255,255,0.15)",
+            x: isConfigured ? -45 : 0
+          }}
+          transition={{ duration: 1.5, type: "spring", stiffness: 80, damping: 15 }}
           className="rounded-lg border border-white/15 bg-[#0C0E1A] p-4 w-[200px] font-mono text-[9px] space-y-2.5 text-left shadow-xl flex-shrink-0 relative overflow-hidden"
         >
           <div className="text-indigo-400 font-extrabold border-b border-white/5 pb-1 flex items-center gap-1 select-none">
             <FileCode className="h-3 w-3" /> ~/.gitconfig
           </div>
-          <div className="space-y-0.5 text-slate-350">
-            <div className="text-slate-505 font-bold">[user]</div>
+          <div className="space-y-0.5 text-slate-355 text-slate-350">
+            <div className="text-slate-500 font-bold">[user]</div>
             <div className="flex gap-1.5 pl-3 items-center min-h-[1.2rem]">
-              <span className="text-slate-555">name =</span>
+              <span className="text-slate-500">name =</span>
               {isPlaying && step > 1 ? (
                 <motion.span 
                   initial={{ width: 0 }}
@@ -1227,11 +1256,11 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                   <span className="h-3 w-1.5 bg-emerald-400 terminal-cursor inline-block" />
                 </motion.span>
               ) : (
-                <span className="text-slate-655 italic">undefined</span>
+                <span className="text-slate-500 italic">undefined</span>
               )}
             </div>
             <div className="flex gap-1.5 pl-3 items-center min-h-[1.2rem]">
-              <span className="text-slate-555">email =</span>
+              <span className="text-slate-500">email =</span>
               {isPlaying && step > 1 ? (
                 <motion.span 
                   initial={{ width: 0 }}
@@ -1243,7 +1272,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                   <span className="h-3 w-1.5 bg-emerald-400 terminal-cursor inline-block" />
                 </motion.span>
               ) : (
-                <span className="text-slate-655 italic">undefined</span>
+                <span className="text-slate-500 italic">undefined</span>
               )}
             </div>
           </div>
@@ -1253,7 +1282,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-emerald-400 font-bold"
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/25 px-3.5 py-1.5 rounded-full text-[9px] text-emerald-400 font-bold"
           >
             ✓ อัปเดตระบุตัวตนเครื่องสำเร็จ!
           </motion.div>
@@ -1262,7 +1291,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     );
   }
 
-  if (type === "color_ui") {
+    if (type === "color_ui") {
     return (
       <div className="flex-1 flex flex-col justify-center items-center gap-3 text-white min-h-0">
         <Laptop className="h-10 w-10 text-slate-355" />
@@ -1313,7 +1342,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 animate={{ scale: 1, opacity: 1 }}
                 className="absolute -top-3 -right-3 rounded-lg border border-indigo-455 bg-slate-900 px-2 py-1 shadow-2xl flex items-center gap-1.5 text-[8.5px] font-mono text-indigo-300"
               >
-                <FolderGit2 className="h-3.5 w-3.5 text-indigo-405" /> .git/
+                <FolderGit2 className="h-3.5 w-3.5 text-indigo-400" /> .git/
               </motion.div>
             )}
           </AnimatePresence>
@@ -1332,61 +1361,79 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
   if (type === "clone") {
+    const isCloned = isPlaying && step > 1;
+
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex items-center justify-center gap-3 relative text-white min-h-0">
         
         {/* GitLab Server */}
-        <div className="flex flex-col items-center gap-2">
+        <motion.div 
+          animate={{ x: isCloned ? 75 : 0 }}
+          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+          className="flex flex-col items-center gap-2"
+        >
           <div className="rounded-xl bg-indigo-950/40 border border-indigo-500/30 p-3.5 shadow-xl flex flex-col gap-1.5 items-center justify-center relative">
             <Server className="h-10 w-10 text-indigo-500 animate-pulse" />
             <div className="flex gap-1 mt-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse" />
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-405" />
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
             </div>
           </div>
           <div className="text-center font-bold text-[9px]">
             <div className="text-white">GitLab Server</div>
             <div className="text-indigo-400">web-app.git</div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Transfer pipeline with files flying */}
-        <div className="flex-1 h-2 bg-white/5 rounded-full mx-4 relative overflow-hidden max-w-[150px] border border-white/5">
-          {isPlaying && (
+        {/* Transfer pipeline with files flying (Expanded Pipeline Channel, hides on completion) */}
+        <motion.div 
+          animate={{ 
+            opacity: isCloned ? 0 : 1,
+            scaleX: isCloned ? 0.3 : 1
+          }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="flex-1 h-5 bg-white/5 rounded-full mx-2 relative overflow-hidden max-w-[160px] border border-white/5 flex-shrink-0"
+        >
+          {isPlaying && !isCloned && (
             <>
+              {/* Scanning light streak */}
               <motion.div
                 initial={{ left: "-40px" }}
                 animate={{ left: "100%" }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+                className="absolute h-full w-[60px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"
               />
               {/* Flying Files */}
               {["📁", "📄", "⚙️"].map((icon, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ left: "-20px", y: -6 }}
+                  initial={{ left: "-20px", y: 0 }}
                   animate={{ left: "100%", y: [4, -4, 4], rotate: 360 }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: idx * 0.4 }}
-                  className="absolute text-xs"
+                  className="absolute text-sm select-none"
                 >
                   {icon}
                 </motion.div>
               ))}
             </>
           )}
-        </div>
+        </motion.div>
 
         {/* Local laptop with file tree expansion */}
-        <div className="flex flex-col items-center gap-2">
+        <motion.div 
+          animate={{ x: isCloned ? -75 : 0 }}
+          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+          className="flex flex-col items-center gap-2 relative"
+        >
           <div className="rounded-xl bg-white/5 border border-white/15 p-3.5 shadow-xl relative">
-            <Laptop className="h-9 w-9 text-slate-350" />
+            <Laptop className="h-9 w-9 text-slate-300" />
             
             {isPlaying && step > 1 && (
               <motion.span 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 0.4, 0] }}
                 transition={{ duration: 1, repeat: Infinity }}
-                className="absolute inset-4 bg-indigo-450 rounded blur-sm"
+                className="absolute inset-4 bg-indigo-400 rounded blur-sm"
               />
             )}
           </div>
@@ -1401,19 +1448,19 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 <FolderGit2 className="h-3.5 w-3.5" /> โคลนสำเร็จ
               </motion.div>
             ) : (
-              <div className="text-slate-655 font-normal">Empty Space</div>
+              <div className="text-slate-400 font-normal">Empty Space</div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Directory popup file tree */}
+        {/* Directory popup file tree (Sibling positioned absolutely next to laptop in top-right) */}
         <AnimatePresence>
           {isPlaying && step > 1 && (
             <motion.div
               initial={{ scale: 0.3, opacity: 0, x: 20 }}
               animate={{ scale: 1, opacity: 1, x: 0 }}
               exit={{ scale: 0.3, opacity: 0 }}
-              className="absolute right-[12%] top-[10%] rounded-lg border border-white/10 bg-slate-900/90 p-2 font-mono text-[8px] space-y-1 shadow-2xl w-[90px] text-left"
+              className="absolute right-[12%] top-[10%] rounded-lg border border-white/10 bg-slate-900/90 p-2 font-mono text-[8px] space-y-1 shadow-2xl w-[90px] text-left z-20"
             >
               <div className="text-emerald-400 font-bold truncate">📁 app/</div>
               <div className="pl-3 text-slate-300">├── 📁 src/</div>
@@ -1426,7 +1473,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/25 px-3.5 py-1 rounded-full text-[9px] text-indigo-400 font-bold"
+            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/25 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
           >
             ⚡ ดึงไฟล์ประวัติและกิ่งหลักมายังเครื่องสำเร็จ!
           </motion.div>
@@ -1435,131 +1482,254 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     );
   }
 
-  if (type === "status") {
-    return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0">
-        
-        {/* Scanning file cards */}
-        <div className="flex items-center gap-4 relative">
-          
-          <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex flex-col items-center gap-1.5 shadow-xl relative overflow-hidden">
-            <div className="h-10 w-10 rounded-lg bg-red-500/10 border border-red-500/40 flex items-center justify-center text-red-400 glow-red">
-              <FileCode className="h-5.5 w-5.5" />
-            </div>
-            <div className="text-center font-mono text-[8px] text-slate-450 leading-tight">
-              index.html <span className="text-red-450 font-bold block mt-0.5">(Modified)</span>
-            </div>
-            
-            {/* Ping indicator */}
-            <span className="absolute top-1.5 right-1.5 h-1 w-1 rounded-full bg-red-500 animate-ping" />
-          </div>
+    if (type === "status") {
+    const isScanning = isPlaying && step < 2;
 
-          {/* Scanner sweeping bar */}
-          {isPlaying && (
+    return (
+      <div className="flex-1 flex flex-col justify-center items-center gap-4.5 relative text-white min-h-0 select-none">
+        
+        {/* Radar Background */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+          <svg className="w-full h-full max-h-[130px]" viewBox="0 0 300 130">
+            <circle cx="150" cy="65" r="25" fill="none" stroke="#6366F1" strokeWidth="1" strokeDasharray="3 3" />
+            <circle cx="150" cy="65" r="55" fill="none" stroke="#6366F1" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="150" cy="65" r="85" fill="none" stroke="#6366F1" strokeWidth="0.5" />
+          </svg>
+        </div>
+
+        {/* Scanning file cards row */}
+        <div className="flex items-center justify-center gap-5 relative z-10 w-full max-w-[280px]">
+          
+          {/* Scanning Sweeping Laser Line */}
+          {isScanning && (
             <motion.div 
-              animate={{ left: ["-10%", "110%", "-10%"] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-0 bottom-0 w-0.5 bg-indigo-500 shadow-[0_0_8px_rgb(99,102,241)] z-10"
+              animate={{ left: ["0%", "100%", "0%"] }}
+              transition={{ duration: 2.6, repeat: 0, ease: "easeInOut" }}
+              className="absolute top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500 via-sky-400 to-indigo-500 shadow-[0_0_10px_rgb(56,189,248)] z-20 pointer-events-none"
             />
           )}
 
-          <div className="h-0.5 w-[50px] border-t border-dashed border-slate-800 relative" />
-
-          <div className="rounded-xl border border-white/10 bg-white/5 p-3 flex flex-col items-center gap-1.5 shadow-xl relative overflow-hidden">
-            <div className="h-10 w-10 rounded-lg bg-orange-500/10 border border-orange-500/40 flex items-center justify-center text-orange-400">
+          {/* Left File: index.html (Modified) */}
+          <motion.div
+            animate={isScanning ? {
+              scale: [1, 1.08, 1],
+              borderColor: ["rgba(239,68,68,0.2)", "rgba(239,68,68,0.7)", "rgba(239,68,68,0.2)"],
+              boxShadow: [
+                "0 0 10px rgba(239,68,68,0.1)",
+                "0 0 20px rgba(239,68,68,0.4)",
+                "0 0 10px rgba(239,68,68,0.1)"
+              ]
+            } : {
+              scale: 1,
+              borderColor: "rgba(239,68,68,0.2)",
+              boxShadow: "0 0 10px rgba(239,68,68,0.1)"
+            }}
+            transition={{ duration: 1.3, ease: "easeInOut" }}
+            className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 flex flex-col items-center gap-1.5 shadow-md relative overflow-hidden w-[105px] h-[105px] justify-center flex-shrink-0"
+          >
+            <div className="h-10 w-10 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 relative">
               <FileCode className="h-5.5 w-5.5" />
+              {/* Scan Laser Reflection Line */}
+              {isScanning && (
+                <motion.div
+                  animate={{ top: ["-10%", "110%"] }}
+                  transition={{ duration: 1.3, ease: "linear" }}
+                  className="absolute left-0 right-0 h-0.5 bg-red-400/35 shadow-sm"
+                />
+              )}
             </div>
-            <div className="text-center font-mono text-[8px] text-slate-455 leading-tight">
-              app.jsx <span className="text-orange-455 font-bold block mt-0.5">(Untracked)</span>
+            <div className="text-center font-mono text-[8px] text-slate-355 leading-tight">
+              index.html <span className="text-red-400 font-bold block mt-0.5">(Modified)</span>
             </div>
-            
-            {/* Pulsing indicator */}
-            <span className="absolute top-1.5 right-1.5 h-1 w-1 rounded-full bg-orange-455 animate-pulse" />
-          </div>
+            <span className="absolute top-1.5 right-1.5 h-1 w-1 rounded-full bg-red-500 animate-ping" />
+          </motion.div>
+
+          {/* Middle Connection Node */}
+          <div className="h-0.5 w-8 border-t border-dashed border-slate-700/60 flex-shrink-0" />
+
+          {/* Right File: app.jsx (Untracked) */}
+          <motion.div
+            animate={isScanning ? {
+              scale: [1, 1.08, 1],
+              borderColor: ["rgba(249,115,22,0.2)", "rgba(249,115,22,0.7)", "rgba(249,115,22,0.2)"],
+              boxShadow: [
+                "0 0 10px rgba(249,115,22,0.1)",
+                "0 0 20px rgba(249,115,22,0.4)",
+                "0 0 10px rgba(249,115,22,0.1)"
+              ]
+            } : {
+              scale: 1,
+              borderColor: "rgba(249,115,22,0.2)",
+              boxShadow: "0 0 10px rgba(249,115,22,0.1)"
+            }}
+            transition={{ duration: 1.3, delay: 1.3, ease: "easeInOut" }}
+            className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-3 flex flex-col items-center gap-1.5 shadow-md relative overflow-hidden w-[105px] h-[105px] justify-center flex-shrink-0"
+          >
+            <div className="h-10 w-10 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 relative">
+              <FileCode className="h-5.5 w-5.5" />
+              {/* Scan Laser Reflection Line */}
+              {isScanning && (
+                <motion.div
+                  animate={{ top: ["-10%", "110%"] }}
+                  transition={{ duration: 1.3, delay: 1.3, ease: "linear" }}
+                  className="absolute left-0 right-0 h-0.5 bg-orange-400/35 shadow-sm"
+                />
+              )}
+            </div>
+            <div className="text-center font-mono text-[8px] text-slate-350 leading-tight">
+              app.jsx <span className="text-orange-400 font-bold block mt-0.5">(Untracked)</span>
+            </div>
+            <span className="absolute top-1.5 right-1.5 h-1 w-1 rounded-full bg-orange-500 animate-pulse" />
+          </motion.div>
 
         </div>
 
-        <motion.div 
-          animate={isPlaying ? { scale: [1, 1.01, 1] } : {}}
-          className="rounded-lg border border-white/10 bg-[#090A14] p-3 w-full max-w-xs font-mono text-[9px] text-left text-slate-355 shadow-xl"
-        >
+        {/* Console status log */}
+        <div className="rounded-lg border border-white/10 bg-[#090A14] p-3 w-full max-w-xs font-mono text-[9px] text-left text-slate-400 shadow-xl relative z-10">
           <div className="text-indigo-400 font-bold border-b border-white/5 pb-1 mb-1.5 flex items-center gap-1">
             <Terminal className="h-3 w-3" /> status log
           </div>
-          <div>On branch <span className="text-indigo-455 font-bold">main</span></div>
-          <div className="text-red-405 font-bold mt-1">Changes not staged:</div>
-          <div className="pl-2 text-red-400/90 leading-none">modified: index.html</div>
-          <div className="text-orange-405 font-bold mt-1">Untracked files:</div>
-          <div className="pl-2 text-orange-455/90 leading-none">app.jsx</div>
-        </motion.div>
+          
+          <div className="space-y-0.5 leading-relaxed">
+            {/* Line 1: always visible */}
+            <div>On branch <span className="text-indigo-400 font-bold">main</span></div>
+            
+            {/* Line 2 & 3: stage unstaged changes */}
+            {(!isPlaying || step >= 1) ? (
+              <div className="text-red-400 font-bold mt-1">
+                Changes not staged:
+                <span className="block pl-2 text-red-400/90 font-normal">modified: index.html</span>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-red-400 font-bold mt-1"
+              >
+                Changes not staged:
+                <span className="block pl-2 text-red-400/90 font-normal">modified: index.html</span>
+              </motion.div>
+            )}
+
+            {/* Line 4 & 5: untracked files */}
+            {(!isPlaying || step >= 2) ? (
+              <div className="text-orange-400 font-bold mt-1">
+                Untracked files:
+                <span className="block pl-2 text-orange-400/90 font-normal">app.jsx</span>
+              </div>
+            ) : isPlaying && step === 1 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-orange-400 font-bold mt-1"
+              >
+                Untracked files:
+                <span className="block pl-2 text-orange-400/90 font-normal">app.jsx</span>
+              </motion.div>
+            ) : (
+              <div className="h-0" />
+            )}
+          </div>
+        </div>
+
       </div>
     );
   }
 
-  if (type === "add") {
+    if (type === "add") {
     const file = params.file || ".";
+    const isStaged = isPlaying && step > 0;
+    
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex items-center justify-center gap-6 relative text-white min-h-0 select-none">
         
-        {/* Working Directory */}
-        <div className="rounded-xl border border-white/15 bg-white/5 p-3 w-[125px] h-[155px] flex flex-col items-center justify-between shadow-xl">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Working Dir</div>
+        {/* Working Directory Card */}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4.5 w-[130px] h-[160px] flex flex-col justify-between items-center shadow-xl relative">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            Working Dir
+          </div>
           
-          <AnimatePresence>
-            {(step === 0 || !isPlaying) && (
+          <div className="h-16 w-12 flex items-center justify-center relative">
+            {!isStaged && (
               <motion.div
-                layoutId="add-file"
-                exit={{ scale: 0.6, opacity: 0, y: 35, rotate: 15 }}
-                transition={{ duration: 0.8 }}
-                className="h-14 w-11 rounded-lg bg-red-500/10 border border-red-500/35 flex flex-col items-center justify-center text-red-405 p-1 shadow-md glow-red relative"
+                layoutId="add-file-card"
+                className="h-14 w-10 rounded-lg bg-red-500/10 border border-red-500/35 flex flex-col items-center justify-center text-red-400 p-1 shadow-md glow-red relative"
               >
-                <FileCode className="h-5 w-5" />
-                <span className="text-[7px] truncate font-mono w-full text-center mt-1 font-bold">{file}</span>
-                <span className="absolute -top-1.5 -right-1.5 text-[6px] font-bold px-1 py-0.5 rounded bg-red-500 text-white">M</span>
+                <FileCode className="h-5.5 w-5.5" />
+                <span className="text-[7.5px] truncate font-mono w-full text-center mt-1 font-bold">{file}</span>
+                <span className="absolute -top-1.5 -right-1.5 text-[6.5px] font-bold px-1.5 py-0.5 rounded bg-red-500 text-white font-mono shadow">M</span>
               </motion.div>
             )}
-          </AnimatePresence>
-          <div />
+          </div>
+          
+          <div className="text-[8px] font-semibold text-red-400/80 flex items-center gap-1 select-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" /> 1 modified
+          </div>
         </div>
 
-        {/* flow line */}
-        <div className="flex-1 h-0.5 border-t border-dashed border-white/10 mx-2" />
+        {/* Conduit line with glowing pulse */}
+        <div className="h-5 bg-white/5 rounded-full relative w-[80px] border border-white/5 overflow-hidden flex-shrink-0">
+          {isPlaying && (
+            <motion.div
+              initial={{ left: "-40px" }}
+              animate={{ left: "100%" }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"
+            />
+          )}
+        </div>
 
-        {/* Staging Area Box */}
-        <div className="rounded-xl border-2 border-indigo-500/35 bg-indigo-500/5 p-3 w-[125px] h-[155px] flex flex-col items-center justify-between shadow-inner relative">
-          <div className="text-[9px] font-bold text-indigo-405 uppercase tracking-widest">Staging Area</div>
+        {/* Staging Area Card */}
+        <div className="rounded-xl border-2 border-dashed border-indigo-500/25 bg-indigo-950/20 p-4.5 w-[130px] h-[160px] flex flex-col justify-between items-center shadow-inner relative overflow-hidden">
+          <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            Staging Area
+          </div>
           
-          <AnimatePresence>
-            {isPlaying && step > 0 && (
+          <div className="h-16 w-12 flex items-center justify-center relative">
+            {isStaged && (
               <motion.div
-                initial={{ scale: 0.6, opacity: 0, y: -35, rotate: -15 }}
-                animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                layoutId="add-file"
-                className="h-14 w-11 rounded-lg bg-emerald-500/10 border border-emerald-500/35 flex flex-col items-center justify-center text-emerald-400 p-1 shadow-lg glow-emerald relative"
+                layoutId="add-file-card"
+                className="h-14 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/35 flex flex-col items-center justify-center text-emerald-400 p-1 shadow-lg glow-emerald relative"
               >
-                <FileCode className="h-5 w-5" />
-                <span className="text-[7px] truncate font-mono w-full text-center mt-1 font-bold">{file}</span>
-                <span className="absolute -top-1.5 -right-1.5 text-[6px] font-bold px-1 py-0.5 rounded bg-emerald-500 text-white">A</span>
+                <FileCode className="h-5.5 w-5.5" />
+                <span className="text-[7.5px] truncate font-mono w-full text-center mt-1 font-bold">{file}</span>
+                <span className="absolute -top-1.5 -right-1.5 text-[6.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-white font-mono shadow">A</span>
                 
-                {/* burst ripple effect */}
+                {/* burst ripple effect inside the file itself */}
                 <motion.span 
-                  initial={{ scale: 0, opacity: 1 }}
-                  animate={{ scale: [1, 1.8, 0], opacity: [1, 0.7, 0] }}
+                  initial={{ scale: 0.8, opacity: 1 }}
+                  animate={{ scale: [1, 1.8, 2.2], opacity: [1, 0.5, 0] }}
                   transition={{ duration: 0.8 }}
-                  className="absolute inset-0 rounded-lg border border-emerald-400 shadow-[0_0_10px_rgba(52,199,89,0.6)]"
+                  className="absolute inset-0 rounded-lg border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,199,89,0.6)]"
                 />
               </motion.div>
             )}
-          </AnimatePresence>
-          <div />
+          </div>
+          
+          <div className="text-[8px] font-semibold text-emerald-400/80 flex items-center gap-1 select-none">
+            <span className={`h-1.5 w-1.5 rounded-full bg-emerald-400 ${isStaged ? "animate-pulse" : ""}`} /> 
+            {isStaged ? "1 staged" : "0 staged"}
+          </div>
+
+          {/* Shockwave ripple on the container */}
+          {isStaged && (
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 1 }}
+              animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="absolute inset-0 rounded-xl border border-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.4)] pointer-events-none"
+            />
+          )}
         </div>
 
-        {isPlaying && step > 0 && (
+        {/* Success message */}
+        {isStaged && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-emerald-400 font-bold"
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
             ✓ สเตจไฟล์เข้าด่านพักของ Staging Area สำเร็จ!
           </motion.div>
@@ -1568,7 +1738,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     );
   }
 
-  if (type === "diff") {
+    if (type === "diff") {
     return (
       <div className="flex-1 flex flex-col justify-center items-center gap-2 text-white min-h-0">
         <div className="rounded-lg bg-[#0C0E1A] p-4.5 w-[260px] font-mono text-[8.5px] text-left border border-white/10 shadow-lg space-y-1 leading-relaxed">
@@ -1590,74 +1760,120 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
   if (type === "commit") {
+    const isCommitted = isPlaying && step > 0;
+    
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex items-center justify-center gap-6 relative text-white min-h-0 select-none">
         
-        {/* Staging Area */}
-        <div className="rounded-xl border border-white/15 bg-white/5 p-3 w-[125px] h-[155px] flex flex-col items-center justify-between shadow-xl">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Staging</div>
-          <AnimatePresence>
-            {(step === 0 || !isPlaying) && (
-              <motion.div 
-                layoutId="commit-circle"
-                exit={{ scale: 0.2, y: 55, opacity: 0, rotate: 90 }}
-                transition={{ duration: 0.8 }}
-                className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/35 flex items-center justify-center text-emerald-400 animate-pulse shadow-lg glow-emerald"
+        {/* Staging Area Card */}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4.5 w-[130px] h-[160px] flex flex-col justify-between items-center shadow-xl relative">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            Staging
+          </div>
+          
+          <div className="h-16 w-12 flex items-center justify-center relative">
+            {!isCommitted && (
+              <motion.div
+                layoutId="commit-node"
+                className="h-14 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/35 flex flex-col items-center justify-center text-emerald-400 p-1 shadow-md glow-emerald relative z-10"
               >
-                <FileCode className="h-5.5 w-5.5 animate-bounce" />
+                <FileCode className="h-5.5 w-5.5" />
+                <span className="text-[7.5px] truncate font-mono w-full text-center mt-1 font-bold">index.html</span>
+                <span className="absolute -top-1.5 -right-1.5 text-[6.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-white font-mono shadow">A</span>
               </motion.div>
             )}
-          </AnimatePresence>
-          <div />
-        </div>
-
-        {/* pipeline */}
-        <div className="flex-1 h-0.5 border-t border-dashed border-white/10 mx-2" />
-
-        {/* Local database timeline graph */}
-        <div className="rounded-xl border border-white/15 bg-white/5 p-3 w-[190px] h-[155px] flex flex-col items-center justify-between relative overflow-hidden shadow-xl">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest z-10">Local Repository</div>
+          </div>
           
-          <motion.div 
-            animate={isPlaying && step > 0 ? { scale: [1, 1.04, 0.97, 1] } : {}}
-            transition={{ duration: 0.8, type: "spring", stiffness: 350, damping: 15 }}
-            className="flex items-center gap-2 mt-4 z-10"
-          >
-            {/* Old Commit Node */}
-            <div className="h-8.5 w-8.5 rounded-full bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-[7.5px] font-mono font-bold text-slate-400 shadow-sm relative select-none">
-              <span>commit</span>
-              <span className="text-[6.5px] text-slate-550">a1d9c</span>
-              <div className="absolute left-[34px] w-3 h-0.5 bg-slate-700" />
-            </div>
-            
-            {/* New Commit Node */}
-            <AnimatePresence>
-              {isPlaying && step > 0 && (
-                <motion.div 
-                  initial={{ scale: 0.1, x: -35, opacity: 0 }}
-                  animate={{ scale: 1, x: 0, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                  layoutId="commit-circle"
-                  className="h-10 w-10 rounded-full bg-indigo-650 border border-indigo-400 flex flex-col items-center justify-center shadow-lg relative glow-indigo"
-                >
-                  <span className="text-[7.5px] font-bold text-indigo-200">COMMIT</span>
-                  <span className="text-[6.5px] font-mono text-white font-bold leading-none">f8e5f</span>
-                  <span className="absolute inset-0 rounded-full border border-indigo-450 animate-ping opacity-30" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          <div className="w-full text-center truncate text-[7.5px] font-mono text-indigo-400 z-10 font-bold px-2">
-            {isPlaying && step > 0 ? `Message: "${params.message}"` : "รอสร้างประวัติ..."}
+          <div className="text-[8px] font-semibold text-emerald-400/80 flex items-center gap-1 select-none">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> 1 staged
           </div>
         </div>
 
-        {isPlaying && step > 0 && (
+        {/* Conduit line with glowing pulse */}
+        <div className="h-5 bg-white/5 rounded-full relative w-[60px] border border-white/5 overflow-hidden flex-shrink-0">
+          {isPlaying && !isCommitted && (
+            <motion.div
+              initial={{ left: "-40px" }}
+              animate={{ left: "100%" }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"
+            />
+          )}
+        </div>
+
+        {/* Local Repository Card */}
+        <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-4 w-[190px] h-[160px] flex flex-col justify-between items-center shadow-inner relative overflow-hidden">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            Local Repo
+          </div>
+          
+          {/* History Timeline */}
+          <div className="flex items-center gap-6 mt-4 relative w-full justify-start pl-4 h-16 z-10">
+            {/* Horizontal Timeline Bar */}
+            <div className="absolute left-6 right-6 h-0.5 bg-slate-700 top-1/2 -translate-y-1/2" />
+            
+            {/* Old Commit Node */}
+            <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-[7px] font-mono font-bold text-slate-400 shadow-sm relative select-none flex-shrink-0">
+              <span>commit</span>
+              <span className="text-[6px] text-slate-500 font-normal">a1d9c</span>
+              
+              {/* HEAD pointer tag on old node if not committed */}
+              {!isCommitted && (
+                <motion.div 
+                  layoutId="head-tag"
+                  className="absolute -top-6 bg-indigo-500 text-white text-[6.5px] font-mono font-bold px-1 py-0.5 rounded shadow border border-indigo-400 select-none"
+                >
+                  HEAD
+                </motion.div>
+              )}
+            </div>
+
+            {/* New Commit Node (Morphs from file card!) */}
+            <div className="h-10 w-10 flex items-center justify-center relative flex-shrink-0">
+              {isCommitted && (
+                <motion.div
+                  layoutId="commit-node"
+                  className="h-9 w-9 rounded-full bg-indigo-600 border border-indigo-400 flex flex-col items-center justify-center shadow-lg relative glow-indigo z-10"
+                >
+                  <span className="text-[7.5px] font-bold text-indigo-100">commit</span>
+                  <span className="text-[6.5px] font-mono text-white font-bold leading-none">f8e5f</span>
+                  
+                  {/* Ping ring */}
+                  <span className="absolute inset-0 rounded-full border border-indigo-400 animate-ping opacity-45" />
+
+                  {/* HEAD pointer tag slides to new node! */}
+                  <motion.div 
+                    layoutId="head-tag"
+                    className="absolute -top-6 bg-indigo-500 text-white text-[6.5px] font-mono font-bold px-1 py-0.5 rounded shadow border border-indigo-400 select-none"
+                  >
+                    HEAD
+                  </motion.div>
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          <div className="w-full text-center truncate text-[8px] font-mono text-indigo-300 z-10 font-bold px-1 mt-1 border-t border-white/5 pt-1.5">
+            {isCommitted ? `Msg: "${params.message || "update"}"` : "รอการ Commit..."}
+          </div>
+
+          {/* Shockwave ripple on the Repo container */}
+          {isCommitted && (
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 1 }}
+              animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="absolute inset-0 rounded-xl border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.3)] pointer-events-none"
+            />
+          )}
+        </div>
+
+        {/* Success toast */}
+        {isCommitted && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
             ✓ บันทึก Commit [f8e5f] และประทับข้อความลงประวัติสำเร็จ!
           </motion.div>
@@ -1666,11 +1882,11 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     );
   }
 
-  if (type === "checkout_file") {
+    if (type === "checkout_file") {
     return (
       <div className="flex-1 flex items-center justify-center relative text-white min-h-0">
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 w-[160px] h-[110px] flex flex-col items-center justify-center relative shadow-lg">
-          <FileCode className="h-8 w-8 text-indigo-405" />
+          <FileCode className="h-8 w-8 text-indigo-400" />
           <span className="text-[9.5px] font-mono font-bold text-slate-300 mt-2">{params.file || "index.html"}</span>
           
           <AnimatePresence>
@@ -1711,73 +1927,111 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
   if (type === "checkout_branch") {
+    const headX = isPlaying && step > 1 ? 160 : 100;
+    const headY = isPlaying && step > 1 ? 65 : 20;
+
     return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0">
-        <div className="w-full max-w-xs h-[175px] border border-white/10 rounded-xl bg-white/5 p-4 flex flex-col justify-around relative shadow-xl">
+      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0 select-none">
+        
+        {/* Graph Card */}
+        <div className="w-[280px] h-[165px] border border-white/10 rounded-xl bg-slate-900/60 p-4.5 flex flex-col justify-between relative shadow-xl overflow-hidden">
           
-          <div className="flex items-center gap-4 pl-4 relative">
-            <span className="text-[9px] font-bold text-slate-400 font-mono w-12">main</span>
-            <div className="h-1.5 bg-slate-700 flex-1 relative flex items-center rounded-full">
-              <div className="absolute left-[30px] h-3 w-3 rounded-full bg-slate-605 border border-slate-800" />
-              <div className="absolute left-[100px] h-3 w-3 rounded-full bg-slate-605 border border-slate-800" />
-              
-              {/* HEAD pointer */}
-              {(!isPlaying || step === 0) && (
-                <motion.div 
-                  layoutId="branch-pointer"
-                  className="absolute left-[100px] h-6.5 w-6.5 rounded-full border-2 border-indigo-400 bg-indigo-500/30 flex items-center justify-center"
-                >
-                  <span className="h-2 w-2 rounded-full bg-indigo-405 animate-ping" />
-                </motion.div>
-              )}
-            </div>
+          {/* Title label */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1">
+            <span className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Git Graph Visualizer</span>
+            <span className="text-[8.5px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/30">
+              {isPlaying && step > 1 ? "Switched Branch" : "On main"}
+            </span>
           </div>
 
-          {/* branch path */}
-          {isPlaying && (
-            <div className="absolute left-[122px] top-[71px] h-[36px] w-12 border-l-2 border-b-2 border-dashed border-indigo-500/50 rounded-bl-lg" />
-          )}
+          {/* SVG Canvas for Git Graph */}
+          <div className="flex-1 relative w-full h-[90px] mt-1">
+            <svg className="w-full h-full" viewBox="0 0 240 90">
+              {/* Main Line */}
+              <line x1="10" y1="20" x2="230" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="3" strokeDasharray="4 4" />
+              <line x1="10" y1="20" x2="200" y2="20" stroke="rgba(148,163,184,0.4)" strokeWidth="3" />
 
-          <div className="flex items-center gap-4 pl-4 relative">
-            <span className="text-[9px] font-bold text-indigo-400 font-mono w-12 truncate">{params.branch || "feature"}</span>
-            <div className="h-1.5 bg-indigo-500/15 flex-1 relative flex items-center rounded-full">
-              
-              {isPlaying && step > 0 && (
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: "75%" }}
-                  transition={{ duration: 1.5 }}
-                  className="absolute left-0 h-1.5 bg-indigo-500 rounded-full"
+              {/* Main Commit Nodes */}
+              <circle cx="40" cy="20" r="5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+              <circle cx="100" cy="20" r="5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+
+              {/* Branching Curve Line */}
+              {isPlaying && (
+                <motion.path
+                  d="M 100 20 Q 120 65 140 65 L 230 65"
+                  fill="none"
+                  stroke="rgba(99,102,241,0.5)"
+                  strokeWidth="3"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
                 />
               )}
 
+              {/* Branch Commit Node (Appears after branch is created) */}
               {isPlaying && step > 1 && (
-                <motion.div
-                  initial={{ scale: 0.3, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute left-[80px] h-3.5 w-3.5 rounded-full bg-indigo-500 border border-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                <motion.circle
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 150 }}
+                  cx="160"
+                  cy="65"
+                  r="5"
+                  fill="#6366F1"
+                  stroke="#0F172A"
+                  strokeWidth="2"
                 />
               )}
 
-              {/* Head Pointer Swapped */}
-              {isPlaying && step > 1 && (
-                <motion.div 
-                  layoutId="branch-pointer"
-                  className="absolute left-[80px] h-6.5 w-6.5 rounded-full border-2 border-indigo-400 bg-indigo-500/30 flex items-center justify-center"
-                >
-                  <span className="h-2 w-2 rounded-full bg-indigo-400 animate-ping" />
-                </motion.div>
-              )}
-            </div>
-          </div>
+              {/* HEAD Pointer & Label (Unified vector group for pixel-perfect alignment) */}
+              <motion.g
+                animate={{ x: headX, y: headY }}
+                transition={{ type: "spring", stiffness: 90, damping: 14 }}
+              >
+                {/* Glowing Pulse Ring (Framer Motion powered) */}
+                <motion.circle
+                  cx="0"
+                  cy="0"
+                  r={6}
+                  initial={{ scale: 1, opacity: 0.8 }}
+                  animate={{ scale: [1, 2.2], opacity: [0.8, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+                  fill="none"
+                  stroke="#818CF8"
+                  strokeWidth="1.5"
+                />
+                {/* Pointer body */}
+                <circle cx="0" cy="0" r="6" fill="rgba(99,102,241,0.25)" stroke="#818CF8" strokeWidth="1.5" />
+                <circle cx="0" cy="0" r="2.5" fill="#818CF8" />
 
+                {/* HEAD label tag above (Nested coordinate space) */}
+                <g transform="translate(0, -11)">
+                  {/* Pointer line */}
+                  <line x1="0" y1="0" x2="0" y2="5" stroke="#818CF8" strokeWidth="1" />
+                  {/* Label box */}
+                  <rect x="-14" y="-11" width="28" height="11" rx="2" fill="#6366F1" stroke="#818CF8" strokeWidth="1" />
+                  {/* Text */}
+                  <text x="0" y="-3" fill="#FFF" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">HEAD</text>
+                </g>
+              </motion.g>
+
+              {/* Labels on SVG */}
+              {/* main label */}
+              <text x="15" y="14" fill="#94A3B8" fontSize="8" fontFamily="monospace" fontWeight="bold">main</text>
+              {/* new branch label */}
+              <text x="15" y="78" fill={isPlaying && step > 1 ? "#818CF8" : "#475569"} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {params.branch || "feature"}
+              </text>
+            </svg>
+          </div>
         </div>
 
+        {/* Switched branch toast */}
         {isPlaying && step > 1 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
+            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/25 px-3.5 py-1.5 rounded-full text-[9.5px] text-indigo-400 font-bold"
           >
             ✓ สลับสาขาทำงาน HEAD → กิ่งใหม่ "{params.branch}" สำเร็จ!
           </motion.div>
@@ -1786,212 +2040,469 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     );
   }
 
-  if (type === "merge") {
-    return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0">
-        <div className="w-full max-w-xs h-[150px] border border-white/10 rounded-xl bg-white/5 p-4 flex flex-col justify-around relative shadow-lg">
-          <div className="flex items-center justify-center gap-1.5 mt-2">
-            
-            {/* Main branch circle */}
-            <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-[7px] text-slate-405 font-bold relative select-none">
-              <span>main</span>
-              <span className="text-[6px] text-slate-500">f8e5f</span>
-              
-              {isPlaying && step > 1 && (
-                <motion.div 
-                  initial={{ scale: 0.1, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute -top-1.5 -right-1.5 h-4.5 w-4.5 rounded-full bg-emerald-600 border border-emerald-400 flex items-center justify-center text-[6px] text-white font-bold shadow-md glow-emerald animate-bounce"
-                >
-                  MRG
-                </motion.div>
-              )}
-            </div>
+    if (type === "merge") {
+    const isMerged = !isPlaying || step >= 2;
+    const isMerging = isPlaying && step === 1;
 
-            {/* Merge connection line */}
-            <div className="w-[50px] h-0.5 border-t border-dashed border-slate-700 relative">
-              {isPlaying && step > 0 && (
-                <motion.div 
-                  initial={{ left: 0 }}
-                  animate={{ left: "100%" }}
-                  transition={{ duration: 1.2 }}
-                  className="absolute h-2 w-2 rounded-full bg-indigo-400 -top-[3.5px] shadow-[0_0_8px_rgb(99,102,241)]"
+    return (
+      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0 select-none">
+        
+        {/* Graph Card */}
+        <div className="w-[280px] h-[165px] border border-white/10 rounded-xl bg-slate-900/60 p-4.5 flex flex-col justify-between relative shadow-xl overflow-hidden">
+          
+          {/* Title label */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1">
+            <span className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Git Merge Visualizer</span>
+            <span className="text-[8.5px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/30">
+              {isMerged ? "Merge Successful" : "Fast-Forwarding..."}
+            </span>
+          </div>
+
+          {/* SVG Canvas for Git Graph */}
+          <div className="flex-1 relative w-full h-[90px] mt-1">
+            <svg className="w-full h-full" viewBox="0 0 240 90">
+              {/* main branch line */}
+              <line x1="10" y1="20" x2="230" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="3" strokeDasharray="4 4" />
+              <line x1="10" y1="20" x2="180" y2="20" stroke="rgba(148,163,184,0.4)" strokeWidth="3" />
+
+              {/* feature branch curve */}
+              <path d="M 40 20 Q 60 65 80 65 L 150 65" fill="none" stroke="rgba(99,102,241,0.5)" strokeWidth="3" />
+
+              {/* Curved connection from feature back to main */}
+              {isPlaying && (
+                <motion.path
+                  d="M 150 65 Q 165 20 180 20"
+                  fill="none"
+                  stroke="#10B981"
+                  strokeWidth="3"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: isMerged ? 1 : (isMerging ? 0.6 : 0) }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
                 />
               )}
-            </div>
 
-            {/* Feature branch circle */}
-            <motion.div 
-              className="h-9 w-9 rounded-full bg-indigo-950/40 border border-indigo-500/30 flex flex-col items-center justify-center text-[7px] text-indigo-400 font-bold relative select-none"
-            >
-              <span>{params.branch ? params.branch.substring(0, 7) : "feature"}</span>
-              <span className="text-[6px] text-indigo-555">c3a4f</span>
-            </motion.div>
+              {/* c1 (root) */}
+              <circle cx="40" cy="20" r="5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+              <text x="36" y="32" fill="#94A3B8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c1</text>
+              <text x="31" y="40" fill="#475569" fontSize="6" fontFamily="monospace">a1d9c</text>
 
+              {/* c2 (feature branch node) */}
+              <circle cx="95" cy="65" r="5" fill="#6366F1" stroke="#0F172A" strokeWidth="2" />
+              <text x="91" y="78" fill="#818CF8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c2</text>
+              <text x="86" y="86" fill="#818CF8" opacity="0.6" fontSize="6" fontFamily="monospace">b2c4d</text>
+
+              {/* c3 (feature branch node 2) */}
+              <circle cx="150" cy="65" r="5" fill="#6366F1" stroke="#0F172A" strokeWidth="2" />
+              <text x="146" y="78" fill="#818CF8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c3</text>
+              <text x="141" y="86" fill="#818CF8" opacity="0.6" fontSize="6" fontFamily="monospace">f8e5f</text>
+
+              {/* Flowing energy ping along curved path */}
+              {isMerging && (
+                <motion.circle
+                  r="4.5"
+                  fill="#34C759"
+                  filter="drop-shadow(0 0 6px #10B981)"
+                  animate={{
+                    cx: [150, 165, 180],
+                    cy: [65, 20, 20]
+                  }}
+                  transition={{
+                    duration: 1.3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              )}
+
+              {/* c4 Merge Commit Node (Landed on main branch!) */}
+              {isMerged && (
+                <g transform="translate(180, 20)">
+                  {/* Ping Ring */}
+                  <motion.circle
+                    cx="0"
+                    cy="0"
+                    r={6.5}
+                    initial={{ scale: 1, opacity: 0.8 }}
+                    animate={{ scale: [1, 2.3], opacity: [0.8, 0] }}
+                    transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+                    fill="none"
+                    stroke="#34C759"
+                    strokeWidth="1.5"
+                  />
+                  
+                  {/* Node body */}
+                  <circle cx="0" cy="0" r="6.5" fill="#10B981" stroke="#0F172A" strokeWidth="2" />
+                  
+                  {/* Merge text label above */}
+                  <text x="-9" y="-10" fill="#34C759" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c4 (m)</text>
+                </g>
+              )}
+
+              {/* HEAD Pointer Tag (Direct SVG group for absolute precision) */}
+              <motion.g
+                animate={{ 
+                  x: isMerged ? 180 : 100,
+                  y: 8
+                }}
+                transition={{ type: "spring", stiffness: 90, damping: 14 }}
+              >
+                {/* Pointer line */}
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#818CF8" strokeWidth="1" />
+                {/* Label box */}
+                <rect x="-14" y="-11" width="28" height="11" rx="2" fill="#6366F1" stroke="#818CF8" strokeWidth="1" />
+                {/* Text */}
+                <text x="0" y="-3" fill="#FFF" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">HEAD</text>
+              </motion.g>
+
+              {/* Labels on SVG */}
+              {/* main label */}
+              <text x="15" y="14" fill="#94A3B8" fontSize="8" fontFamily="monospace" fontWeight="bold">main</text>
+              {/* feature branch label */}
+              <text x="15" y="78" fill="#818CF8" fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {params.branch || "feature/auth-page"}
+              </text>
+            </svg>
           </div>
+
+          {/* Shockwave ripple when merged */}
+          {isMerged && (
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 1 }}
+              animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+              transition={{ duration: 0.9, delay: 0.1 }}
+              className="absolute inset-0 rounded-xl border border-emerald-500/20 shadow-[0_0_12px_rgba(99,102,241,0.2)] pointer-events-none"
+            />
+          )}
         </div>
-        {isPlaying && step > 1 && (
+
+        {/* Success toast */}
+        {isMerged && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 rounded-full text-[9px] text-indigo-400 font-bold"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
-            ✓ รวมสาขา "{params.branch || "feature"}" เข้าสู่กิ่ง main สำเร็จ!
+            ✓ ผสานประวัติกิ่ง "{params.branch || "feature/auth-page"}" เข้าสู่กิ่งหลักสำเร็จ!
           </motion.div>
         )}
       </div>
     );
   }
 
-  if (type === "rebase") {
+    if (type === "rebase") {
+    const c3X = isPlaying && step > 0 ? 165 : 105;
+    const c3Y = isPlaying && step > 0 ? 20 : 65;
+    const isCompleted = isPlaying && step > 1;
+
     return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0">
-        <div className="w-full max-w-xs h-[160px] border border-white/10 rounded-xl bg-white/5 p-4 flex flex-col justify-around relative shadow-lg">
-          <div className="flex flex-col gap-3.5 pl-6 relative">
-            
-            {/* Line of main */}
-            <div className="flex items-center gap-2">
-              <span className="text-[7.5px] text-slate-400 font-bold w-10">main</span>
-              <div className="flex items-center gap-1.5">
-                <div className="h-6 w-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[6px] text-slate-400 font-bold">c1</div>
-                <div className="h-6 w-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[6px] text-slate-400 font-bold">c2</div>
-                
-                {isPlaying && step > 1 && (
-                  <motion.div
-                    initial={{ scale: 0.1, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="h-6.5 w-6.5 rounded-full bg-indigo-650 border border-indigo-400 flex items-center justify-center text-[6px] text-white font-bold shadow-md glow-indigo"
-                  >
-                    c3*
-                  </motion.div>
+      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0 select-none">
+        
+        {/* Graph Card */}
+        <div className="w-[280px] h-[165px] border border-white/10 rounded-xl bg-slate-900/60 p-4.5 flex flex-col justify-between relative shadow-xl overflow-hidden">
+          
+          {/* Title label */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1">
+            <span className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Git Rebase Visualizer</span>
+            <span className="text-[8.5px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/30">
+              {isCompleted ? "Rebase Complete" : "Rebasing..."}
+            </span>
+          </div>
+
+          {/* SVG Canvas for Git Graph */}
+          <div className="flex-1 relative w-full h-[90px] mt-1">
+            <svg className="w-full h-full" viewBox="0 0 240 90">
+              
+              {/* main branch line */}
+              <line x1="10" y1="20" x2="230" y2="20" stroke="rgba(255,255,255,0.1)" strokeWidth="3" strokeDasharray="4 4" />
+              <line x1="10" y1="20" x2="105" y2="20" stroke="rgba(148,163,184,0.4)" strokeWidth="3" />
+              
+              {/* Rebased line connection segment (Grows during rebase) */}
+              <motion.line
+                x1="105"
+                y1="20"
+                x2="165"
+                y2="20"
+                stroke="#6366F1"
+                strokeWidth="3"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: isPlaying && step > 0 ? 1 : 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              />
+
+              {/* original feature branch path (Fades out after rebase completes) */}
+              <motion.path
+                d="M 45 20 Q 65 65 85 65 L 140 65"
+                fill="none"
+                stroke="rgba(99,102,241,0.4)"
+                strokeWidth="3"
+                animate={{ opacity: isCompleted ? 0 : 1 }}
+                transition={{ duration: 0.6 }}
+              />
+
+              {/* Commits on main */}
+              {/* c1 */}
+              <circle cx="45" cy="20" r="5.5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+              <text x="41" y="11" fill="#94A3B8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c1</text>
+              
+              {/* c2 */}
+              <circle cx="105" cy="20" r="5.5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+              <text x="101" y="11" fill="#94A3B8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c2</text>
+
+              {/* c3 commit node (Glides dynamically from feature to main) */}
+              <motion.g
+                animate={{ x: c3X, y: c3Y }}
+                transition={{ type: "spring", stiffness: 70, damping: 12 }}
+              >
+                {/* Glow ring when completed */}
+                {isCompleted && (
+                  <circle cx="0" cy="0" r="10" fill="none" stroke="#34C759" strokeWidth="1.5" className="animate-pulse" />
                 )}
-              </div>
-            </div>
+                {/* Node body */}
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="6"
+                  fill={isCompleted ? "#10B981" : "#6366F1"}
+                  stroke="#0F172A"
+                  strokeWidth="2.5"
+                />
+                <text
+                  x="-7"
+                  y="-9"
+                  fill={isCompleted ? "#34C759" : "#818CF8"}
+                  fontSize="7.5"
+                  fontFamily="monospace"
+                  fontWeight="bold"
+                >
+                  {isCompleted ? "c3'" : "c3"}
+                </text>
+              </motion.g>
 
-            {/* Line of feature */}
-            {(!isPlaying || step <= 1) && (
-              <div className="flex items-center gap-2">
-                <span className="text-[7.5px] text-indigo-405 font-bold w-10 truncate">{params.branch || "feature"}</span>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-6 w-6 rounded-full bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-center text-[6px] text-indigo-400 font-bold relative">
-                    c3
-                    {isPlaying && step === 1 && (
-                      <motion.span 
-                        animate={{ y: -30, opacity: 0 }}
-                        transition={{ duration: 1 }}
-                        className="absolute inset-0 rounded-full border border-indigo-400"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
+              {/* Labels on SVG */}
+              {/* target branch label (top line) */}
+              <text x="10" y="32" fill="#818CF8" fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {params.branch || "feature"}
+              </text>
+              
+              {/* main label (bottom line) */}
+              <motion.text
+                x="10"
+                y="75"
+                fill="#94A3B8"
+                fontSize="8"
+                fontFamily="monospace"
+                fontWeight="bold"
+                animate={{ opacity: isCompleted ? 0.2 : 1 }}
+              >
+                main
+              </motion.text>
+            </svg>
           </div>
         </div>
-        {isPlaying && step > 1 && (
+
+        {/* Success toast */}
+        {isCompleted && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1 rounded-full text-[9px] text-indigo-400 font-bold"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/25 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
-            ✓ ดึงกิ่งคอมมิตขึ้นไป Rebase บนหัวกิ่ง "{params.branch || "main"}" สำเร็จ!
+            ✓ ย้ายฐานประวัติ (Rebase) กิ่ง "main" บนหัวกิ่ง "{params.branch || "feature"}" สำเร็จ!
           </motion.div>
         )}
       </div>
     );
   }
 
-  if (type === "push" || type === "pull") {
-    const isPush = type === "push";
+    if (type === "push") {
+    const isPushed = !isPlaying || step >= 2;
+    
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex items-center justify-center gap-6 relative text-white min-h-0 select-none">
         
         {/* Local Machine */}
         <div className="flex flex-col items-center gap-2">
-          <div className="rounded-xl border border-white/20 bg-white/10 p-3 flex flex-col items-center shadow-xl">
-            <Laptop className="h-8 w-8 text-slate-355" />
-            <div className="flex gap-1.5 mt-2.5">
+          <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-xl relative">
+            <Laptop className="h-8 w-8 text-slate-400" />
+            
+            <div className="flex gap-1.5 justify-center mt-1">
               <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
-              <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-500 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo">c2</span>
-              {isPlaying && !isPush && step > 1 && (
-                <motion.span 
-                  initial={{ scale: 0.3, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="h-4.5 w-4.5 rounded-full bg-emerald-600 border border-emerald-500 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-emerald">c3</motion.span>
-              )}
+              <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo">c2</span>
             </div>
+            
+            <span className="text-[8.5px] font-bold text-slate-400">Local Machine</span>
           </div>
-          <span className="text-[9px] font-bold text-slate-400">Local Machine</span>
         </div>
 
-        {/* pipe beam */}
-        <div className="flex-1 h-1.5 bg-white/10 rounded-full mx-4 relative overflow-hidden max-w-[150px] border border-white/5">
+        {/* High-tech conduit pipeline */}
+        <div className="flex-1 h-5 bg-white/5 rounded-full mx-1 relative overflow-hidden max-w-[130px] border border-white/5 flex-shrink-0">
           {isPlaying && (
             <>
+              {/* Laser stream */}
               <motion.div
-                initial={isPush ? { left: "-40px" } : { right: "-45px" }}
-                animate={isPush ? { left: "100%" } : { right: "100%" }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-                className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+                initial={{ left: "-50px" }}
+                animate={{ left: "100%" }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="absolute h-full w-[50px] bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent"
               />
-              {/* Flying Commit Packet */}
+              
+              {/* Flying File Emoji (Centering using Flexbox with infinite looping keyframes) */}
               <motion.div
-                initial={isPush ? { left: "0%" } : { left: "100%" }}
-                animate={isPush ? { left: "100%" } : { left: "0%" }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute h-2.5 w-2.5 rounded-full bg-indigo-400 border border-white shadow-[0_0_8px_rgba(99,102,241,0.8)] -top-[2px]"
-              />
+                animate={{ left: ["0%", "88%"] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 h-full z-10 flex items-center justify-center select-none"
+              >
+                <span className="text-[10px] filter drop-shadow-[0_0_3px_rgba(52,199,89,0.85)]">📄</span>
+              </motion.div>
             </>
           )}
         </div>
 
-        {/* Server GitLab */}
+        {/* Server GitLab Cloud */}
         <div className="flex flex-col items-center gap-2">
-          <div className="rounded-xl border border-slate-800 bg-[#111827] p-3 flex flex-col items-center shadow-xl relative">
-            <Server className="h-8 w-8 text-indigo-555 animate-pulse" />
-            <div className="flex gap-1.5 mt-2.5">
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-inner relative overflow-hidden">
+            <Server className={`h-8 w-8 transition-colors duration-500 ${isPushed ? "text-emerald-400" : "text-slate-500"}`} />
+            
+            <div className="flex gap-1.5 justify-center mt-1">
               <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
-              {isPush ? (
-                isPlaying && step > 1 ? (
-                  <motion.span 
-                    initial={{ scale: 0.3, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="h-4.5 w-4.5 rounded-full bg-indigo-650 border border-indigo-500 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo"
-                  >
-                    c2
-                  </motion.span>
-                ) : (
-                  <span className="h-4.5 w-4.5 rounded-full bg-slate-900 border border-slate-850 flex items-center justify-center text-[7px] font-mono text-slate-700 font-bold">c2</span>
-                )
+              {isPushed ? (
+                <motion.span 
+                  initial={{ scale: 0.1, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 150 }}
+                  className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo"
+                >
+                  c2
+                </motion.span>
               ) : (
-                <>
-                  <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-500 flex items-center justify-center text-[7px] font-mono text-white font-bold">c2</span>
-                  <span className="h-4.5 w-4.5 rounded-full bg-emerald-600 border border-emerald-500 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-emerald">c3</span>
-                </>
+                <span className="h-4.5 w-4.5 rounded-full border border-dashed border-slate-800 bg-transparent flex items-center justify-center text-[7px] font-mono text-slate-700 font-bold">c2</span>
               )}
             </div>
             
-            {/* Glowing active light */}
-            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse" />
+            <span className="text-[8.5px] font-bold text-indigo-400">GitLab Cloud</span>
+
+            {/* Shockwave ripple when landed */}
+            {isPushed && (
+              <motion.span 
+                initial={{ scale: 0.8, opacity: 1 }}
+                animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+                transition={{ duration: 0.9, delay: 0.1 }}
+                className="absolute inset-0 rounded-xl border border-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.3)] pointer-events-none"
+              />
+            )}
           </div>
-          <span className="text-[9px] font-bold text-indigo-400">GitLab Cloud (origin)</span>
         </div>
 
-        {isPlaying && step > 1 && (
+        {/* Success toast */}
+        {isPushed && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
-            {isPush ? "🚀 ดันขึ้นเซิร์ฟเวอร์บนกิ่ง " : "📥 ดึงอัปเดตงานเพื่อนมารวมบนกิ่ง "} [{params.branch || "main"}] สำเร็จ!
+            ✓ 🚀 ดันขึ้นเซิร์ฟเวอร์บนกิ่ง [${params.branch || "main"}] สำเร็จ!
           </motion.div>
         )}
       </div>
     );
   }
 
-  if (type === "stash") {
+  if (type === "pull") {
+    const isPulled = !isPlaying || step >= 2;
+    
+    return (
+      <div className="flex-1 flex items-center justify-center gap-6 relative text-white min-h-0 select-none">
+        
+        {/* Local Machine */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-inner relative overflow-hidden">
+            <Laptop className={`h-8 w-8 transition-colors duration-500 ${isPulled ? "text-emerald-400" : "text-slate-500"}`} />
+            
+            <div className="flex gap-1 justify-center mt-1">
+              <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
+              <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-500 flex items-center justify-center text-[7px] font-mono text-white font-bold">c2</span>
+              {isPulled ? (
+                <motion.span 
+                  initial={{ scale: 0.1, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 150 }}
+                  className="h-4.5 w-4.5 rounded-full bg-emerald-600 border border-emerald-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-emerald"
+                >
+                  c3
+                </motion.span>
+              ) : (
+                <span className="h-4.5 w-4.5 rounded-full border border-dashed border-slate-800 bg-transparent flex items-center justify-center text-[7px] font-mono text-slate-700 font-bold">c3</span>
+              )}
+            </div>
+            
+            <span className="text-[8.5px] font-bold text-slate-400">Local Machine</span>
+
+            {/* Shockwave ripple when landed */}
+            {isPulled && (
+              <motion.span 
+                initial={{ scale: 0.8, opacity: 1 }}
+                animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+                transition={{ duration: 0.9, delay: 0.1 }}
+                className="absolute inset-0 rounded-xl border border-emerald-400 shadow-[0_0_12px_rgba(52,199,89,0.3)] pointer-events-none"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* High-tech conduit pipeline */}
+        <div className="flex-1 h-5 bg-white/5 rounded-full mx-1 relative overflow-hidden max-w-[130px] border border-white/5 flex-shrink-0">
+          {isPlaying && (
+            <>
+              {/* Laser stream (flowing right-to-left) */}
+              <motion.div
+                initial={{ right: "-50px" }}
+                animate={{ right: "100%" }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="absolute h-full w-[50px] bg-gradient-to-l from-transparent via-emerald-500/25 to-transparent"
+              />
+              
+              {/* Flying File Emoji (flowing right-to-left) */}
+              <motion.div
+                animate={{ right: ["0%", "88%"] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 h-full z-10 flex items-center justify-center select-none"
+              >
+                <span className="text-[10px] filter drop-shadow-[0_0_3px_rgba(52,199,89,0.85)]">📄</span>
+              </motion.div>
+            </>
+          )}
+        </div>
+
+        {/* Server GitLab Cloud */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-xl relative">
+            <Server className="h-8 w-8 text-indigo-555 animate-pulse" />
+            
+            <div className="flex gap-1 justify-center mt-1">
+              <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
+              <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center text-[7px] font-mono text-white font-bold">c2</span>
+              <span className="h-4.5 w-4.5 rounded-full bg-emerald-600 border border-emerald-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-emerald">c3</span>
+            </div>
+            
+            <span className="text-[8.5px] font-bold text-indigo-400">GitLab Cloud</span>
+          </div>
+        </div>
+
+        {/* Success toast */}
+        {isPulled && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
+          >
+            ✓ 📥 ดึงอัปเดตงานเพื่อนมารวมบนกิ่ง [${params.branch || "main"}] สำเร็จ!
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
+    if (type === "stash") {
     return (
       <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
         
@@ -2042,7 +2553,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 layoutId="stash-pack"
                 className="h-12 w-10 rounded-lg bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-slate-400 p-1 shadow-lg relative"
               >
-                <Database className="h-4 w-4 text-indigo-405 animate-pulse" />
+                <Database className="h-4 w-4 text-indigo-400 animate-pulse" />
                 <span className="text-[7.5px] font-mono mt-0.5 font-bold">stash@{`{0}`}</span>
                 <span className="absolute top-1.5 right-1.5 text-[7px]">🔒</span>
               </motion.div>
@@ -2068,48 +2579,121 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
   if (type === "tag_create") {
-    return (
-      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0">
-        <div className="w-full max-w-xs h-[150px] border border-white/10 rounded-xl bg-white/5 p-4 flex flex-col justify-around relative shadow-lg">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Local Commit Timeline</div>
-          <div className="flex items-center justify-center gap-3 mt-2 relative">
-            
-            {/* Commit 1 */}
-            <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-[7px] text-slate-450 font-bold">
-              <span>c1</span>
-              <span className="text-[5.5px] text-slate-500">a1d9c</span>
-            </div>
-            
-            <div className="w-4 h-0.5 bg-slate-700" />
-            
-            {/* Commit 2 (Target commit to tag) */}
-            <div className="h-9 w-9 rounded-full bg-indigo-650 border border-indigo-500 flex flex-col items-center justify-center text-[7.5px] text-white font-bold relative shadow-lg glow-indigo">
-              <span>c2</span>
-              <span className="text-[6px] text-indigo-300">f8e5f</span>
-              
-              {/* Floating Tag Pinning Animation */}
-              {isPlaying && step > 1 && (
-                <motion.div
-                  initial={{ scale: 0.1, y: -25, opacity: 0 }}
-                  animate={{ scale: 1, y: 0, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="absolute -bottom-5 left-[3px] bg-amber-500 text-slate-950 font-sans font-black text-[7.5px] px-1.5 py-0.5 rounded shadow-[0_0_8px_rgba(245,158,11,0.6)] flex items-center gap-0.5 border border-amber-300 whitespace-nowrap"
-                >
-                  <span>🏷️</span>
-                  <span>{params.version || "v1.0.0"}</span>
-                </motion.div>
-              )}
-            </div>
+    const isCompleted = !isPlaying || step >= 2;
+    const isStamping = isPlaying && step === 1;
+    const tagVal = params.version || "v1.0.0";
+    
+    // Tag y-coordinate state: high off-screen (-15) -> hovering (12) -> stamped (22)
+    const tagY = isCompleted ? 22 : (isStamping ? 12 : -15);
+    const tagOpacity = isCompleted ? 1 : (isStamping ? 0.85 : 0);
 
+    return (
+      <div className="flex-1 flex flex-col justify-center items-center gap-4 relative text-white min-h-0 select-none">
+        
+        {/* Graph Card */}
+        <div className="w-[280px] h-[165px] border border-white/10 rounded-xl bg-slate-900/60 p-4.5 flex flex-col justify-between relative shadow-xl overflow-hidden">
+          
+          {/* Title label */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-1.5 mb-1">
+            <span className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">Git Tag Visualizer</span>
+            <span className="text-[8.5px] font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/30">
+              {isCompleted ? "Tag Attached" : "WIP"}
+            </span>
           </div>
+
+          {/* SVG Canvas for Git Graph */}
+          <div className="flex-1 relative w-full h-[90px] mt-1">
+            <svg className="w-full h-full" viewBox="0 0 240 90">
+              {/* main branch line */}
+              <line x1="10" y1="45" x2="230" y2="45" stroke="rgba(255,255,255,0.1)" strokeWidth="3" strokeDasharray="4 4" />
+              <line x1="10" y1="45" x2="190" y2="45" stroke="rgba(148,163,184,0.4)" strokeWidth="3" />
+
+              {/* c1 commit node */}
+              <circle cx="60" cy="45" r="5" fill="#64748B" stroke="#0F172A" strokeWidth="2" />
+              <text x="56" y="58" fill="#94A3B8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c1</text>
+              <text x="51" y="66" fill="#475569" fontSize="6" fontFamily="monospace">a1d9c</text>
+
+              {/* c2 commit node (Target) */}
+              <circle cx="160" cy="45" r="5.5" fill="#6366F1" stroke="#0F172A" strokeWidth="2" className="glow-indigo" />
+              <text x="156" y="58" fill="#818CF8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">c2</text>
+              <text x="151" y="66" fill="#818CF8" opacity="0.6" fontSize="6" fontFamily="monospace">f8e5f</text>
+
+              {/* Stamping alignment line */}
+              {isStamping && (
+                <motion.line
+                  x1="160"
+                  y1="12"
+                  x2="160"
+                  y2="40"
+                  stroke="#F59E0B"
+                  strokeWidth="1"
+                  strokeDasharray="2 2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.8 }}
+                />
+              )}
+
+              {/* Looping Pulse Ring when tag lands */}
+              {isCompleted && (
+                <motion.circle
+                  cx="160"
+                  cy="45"
+                  r={6}
+                  initial={{ scale: 1, opacity: 0.8 }}
+                  animate={{ scale: [1, 2.3], opacity: [0.8, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+                  fill="none"
+                  stroke="#F59E0B"
+                  strokeWidth="1.5"
+                />
+              )}
+
+              {/* Descending Tag Stamp (Wrapped in static group to lock x position) */}
+              <g transform="translate(160, 0)">
+                <motion.g
+                  animate={{ 
+                    y: tagY,
+                    opacity: tagOpacity
+                  }}
+                  transition={{ type: "spring", stiffness: 100, damping: 13 }}
+                >
+                  {/* Pointer connecting line */}
+                  <line x1="0" y1="0" x2="0" y2="23" stroke="#F59E0B" strokeWidth="1.2" />
+                  
+                  {/* Stamp Tag background */}
+                  <rect x="-24" y="-12" width="48" height="12" rx="2" fill="#F59E0B" stroke="#FBBF24" strokeWidth="1" />
+                  
+                  {/* Stamp Text */}
+                  <text x="0" y="-3.5" fill="#0F172A" fontSize="6.5" fontFamily="monospace" fontWeight="extrabold" textAnchor="middle">
+                    🏷️ {tagVal}
+                  </text>
+                </motion.g>
+              </g>
+
+              {/* main label */}
+              <text x="12" y="36" fill="#94A3B8" fontSize="8" fontFamily="monospace" fontWeight="bold">main</text>
+            </svg>
+          </div>
+
+          {/* Golden Shockwave on landing */}
+          {isCompleted && (
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 1 }}
+              animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+              transition={{ duration: 0.9, delay: 0.1 }}
+              className="absolute inset-0 rounded-xl border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.2)] pointer-events-none"
+            />
+          )}
         </div>
-        {isPlaying && step > 1 && (
+
+        {/* Success toast */}
+        {isCompleted && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
-            ✓ สร้างป้ายกำกับ "{params.version}" ผูกติดคอมมิต [f8e5f] สำเร็จ!
+            ✓ สร้างป้ายกำกับ "{tagVal}" ผูกติดคอมมิต [f8e5f] สำเร็จ!
           </motion.div>
         )}
       </div>
@@ -2117,74 +2701,109 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
   if (type === "tag_push") {
+    const isPushed = !isPlaying || step >= 2;
+    const tagVal = params.version || "v1.0.0";
+    
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex items-center justify-center gap-6 relative text-white min-h-0 select-none">
         
-        {/* Local computer with tagged commit */}
+        {/* Local Machine */}
         <div className="flex flex-col items-center gap-2">
-          <div className="rounded-xl border border-white/20 bg-white/10 p-3 flex flex-col items-center shadow-xl relative">
-            <Laptop className="h-8 w-8 text-slate-355" />
-            <div className="h-5.5 w-5.5 rounded-full bg-indigo-600 flex items-center justify-center text-[7px] font-bold mt-2 relative">
-              c2
+          <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-xl relative">
+            <Laptop className="h-8 w-8 text-slate-400" />
+            
+            <div className="flex gap-1.5 justify-center mt-1 relative pb-2">
+              <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
               
-              {/* Tag icon */}
-              {(!isPlaying || step === 0) && (
-                <motion.div 
-                  layoutId="flying-tag"
-                  className="absolute -bottom-3 bg-amber-500 text-slate-950 text-[6.5px] px-1 py-0.5 rounded font-black border border-amber-300 shadow-sm whitespace-nowrap"
-                >
-                  {params.version || "v1.0.0"}
-                </motion.div>
-              )}
+              {/* Local Commit c2 with Tag attached */}
+              <div className="relative">
+                <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo">c2</span>
+                <span className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 text-[5px] px-1 py-0.2 rounded font-extrabold border border-amber-300 shadow-sm whitespace-nowrap">
+                  {tagVal}
+                </span>
+              </div>
             </div>
+            
+            <span className="text-[8.5px] font-bold text-slate-400">Local Machine</span>
           </div>
-          <span className="text-[9px] font-bold text-slate-400">Local Machine</span>
         </div>
 
-        {/* pipe beam */}
-        <div className="flex-1 h-1.5 bg-white/10 rounded-full mx-4 relative max-w-[150px]">
-          {isPlaying && step > 0 && step < 2 && (
-            <motion.div
-              layoutId="flying-tag"
-              initial={{ left: "0%" }}
-              animate={{ left: "100%" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              className="absolute -top-2 bg-amber-500 text-slate-950 text-[6.5px] px-1 py-0.5 rounded font-black border border-amber-300 shadow-md whitespace-nowrap"
-            >
-              {params.version || "v1.0.0"}
-            </motion.div>
+        {/* High-tech conduit pipeline */}
+        <div className="flex-1 h-5 bg-white/5 rounded-full mx-1 relative overflow-hidden max-w-[130px] border border-white/5 flex-shrink-0">
+          {isPlaying && (
+            <>
+              {/* Laser stream (yellow/gold) */}
+              <motion.div
+                initial={{ left: "-50px" }}
+                animate={{ left: "100%" }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="absolute h-full w-[50px] bg-gradient-to-r from-transparent via-amber-500/25 to-transparent"
+              />
+              
+              {/* Flying Tag Emoji & Text (Centering using Flexbox with infinite looping keyframes) */}
+              <motion.div
+                animate={{ left: ["0%", "80%"] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 h-full z-10 flex items-center justify-center select-none"
+              >
+                <span className="bg-amber-500 text-slate-950 text-[4.5px] px-1 py-0.5 rounded font-extrabold border border-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.6)] whitespace-nowrap">
+                  🏷️ {tagVal}
+                </span>
+              </motion.div>
+            </>
           )}
         </div>
 
-        {/* Server GitLab with tag landing */}
+        {/* Server GitLab Cloud */}
         <div className="flex flex-col items-center gap-2">
-          <div className="rounded-xl border border-slate-800 bg-[#111827] p-3 flex flex-col items-center shadow-xl relative">
-            <Server className="h-8 w-8 text-indigo-555 animate-pulse" />
-            <div className="h-5.5 w-5.5 rounded-full bg-indigo-600 flex items-center justify-center text-[7px] font-bold mt-2 relative">
-              c2
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-3.5 w-[110px] h-[125px] flex flex-col justify-between items-center shadow-inner relative overflow-hidden">
+            <Server className={`h-8 w-8 transition-colors duration-500 ${isPushed ? "text-amber-400" : "text-slate-500"}`} />
+            
+            <div className="flex gap-1.5 justify-center mt-1 relative pb-2">
+              <span className="h-4.5 w-4.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[7px] font-mono text-slate-400 font-bold">c1</span>
               
-              {isPlaying && step >= 2 && (
-                <motion.div 
-                  layoutId="flying-tag"
-                  initial={{ scale: 0.2 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -bottom-3 bg-amber-500 text-slate-950 text-[6.5px] px-1 py-0.5 rounded font-black border border-amber-300 shadow-md glow-amber whitespace-nowrap"
-                >
-                  {params.version || "v1.0.0"}
-                </motion.div>
-              )}
+              {/* Remote Commit c2 (Tag appears after successful push) */}
+              <div className="relative">
+                <span className="h-4.5 w-4.5 rounded-full bg-indigo-600 border border-indigo-400 flex items-center justify-center text-[7px] font-mono text-white font-bold glow-indigo">c2</span>
+                {isPushed ? (
+                  <motion.span 
+                    initial={{ scale: 0.1, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 150 }}
+                    className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 bg-amber-500 text-slate-950 text-[5px] px-1 py-0.2 rounded font-extrabold border border-amber-300 shadow-sm whitespace-nowrap"
+                  >
+                    {tagVal}
+                  </motion.span>
+                ) : (
+                  <span className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 border border-dashed border-slate-700 bg-transparent text-slate-500 text-[4px] px-1 py-0.2 rounded font-extrabold whitespace-nowrap">
+                    none
+                  </span>
+                )}
+              </div>
             </div>
+            
+            <span className="text-[8.5px] font-bold text-indigo-400">GitLab Cloud</span>
+
+            {/* Shockwave ripple when landed */}
+            {isPushed && (
+              <motion.span 
+                initial={{ scale: 0.8, opacity: 1 }}
+                animate={{ scale: [1, 1.6, 2], opacity: [1, 0.4, 0] }}
+                transition={{ duration: 0.9, delay: 0.1 }}
+                className="absolute inset-0 rounded-xl border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.2)] pointer-events-none"
+              />
+            )}
           </div>
-          <span className="text-[9px] font-bold text-indigo-405">GitLab Server</span>
         </div>
 
-        {isPlaying && step > 1 && (
+        {/* Success toast */}
+        {isPushed && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-405 font-bold"
+            className="absolute bottom-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-emerald-400 font-bold"
           >
-            🚀 ดันส่งป้ายกำกับ "{params.version}" สู่เซิร์ฟเวอร์ GitLab สำเร็จ!
+            ✓ 🚀 ดันส่งป้ายกำกับ "${tagVal}" สู่เซิร์ฟเวอร์ GitLab สำเร็จ!
           </motion.div>
         )}
       </div>

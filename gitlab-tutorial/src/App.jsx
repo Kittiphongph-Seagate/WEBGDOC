@@ -1175,6 +1175,18 @@ export default function App() {
               <span>Git Simulator</span>
             </button>
             <button
+              onClick={() => setViewMode("graph")}
+              className={cn(
+                "rounded-md px-3.5 py-1.5 text-[10px] font-black cursor-pointer transition-all duration-200 flex items-center gap-1.5",
+                viewMode === "graph"
+                  ? "bg-slate-900 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>Git Branch Graph</span>
+            </button>
+            <button
               onClick={() => setViewMode("guide")}
               className={cn(
                 "rounded-md px-3.5 py-1.5 text-[10px] font-black cursor-pointer transition-all duration-200 flex items-center gap-1.5",
@@ -1405,6 +1417,8 @@ export default function App() {
 
           </div>
         </>
+      ) : viewMode === "graph" ? (
+        <GitBranchGraphVisualizer />
       ) : (
         /* GitLab Setup Guide View Mode */
         <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 relative z-10 overflow-hidden">

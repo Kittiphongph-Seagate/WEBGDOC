@@ -3290,74 +3290,164 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
   }
 
     if (type === "stash") {
+    const isWIP = !isPlaying || step === 0 || step === 3;
+    const isStashed = isPlaying && step >= 1 && step < 3;
+    const isPopping = isPlaying && step === 2;
+
     return (
-      <div className="flex-1 flex items-center justify-around relative text-white min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-around gap-4 relative text-white min-h-0 select-none p-4">
         
-        {/* Working directory status */}
-        <div className="rounded-xl border border-white/15 bg-white/5 p-3 w-[125px] h-[155px] flex flex-col items-center justify-between shadow-xl">
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Working Dir</div>
-          
-          <AnimatePresence>
-            {(!isPlaying || step === 0 || step === 3) ? (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ y: 90, scale: 0.4, opacity: 0, rotate: 30 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                layoutId="stash-pack"
-                className="h-14 w-12 rounded-lg bg-orange-500/10 border border-orange-500/35 flex flex-col items-center justify-center text-orange-400 p-1 shadow-md glow-red relative"
-              >
-                <FileCode className="h-5 w-5" />
-                <span className="text-[8px] font-mono leading-none mt-1 font-bold">stash_code</span>
-              </motion.div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-[9px] text-emerald-400 font-extrabold flex items-center gap-1 mt-6"
-              >
-                ✓ CLEAN
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div />
+        {/* Left: Working Directory Card */}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4.5 w-[145px] h-[190px] flex flex-col justify-between items-center shadow-xl relative overflow-hidden flex-shrink-0">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            Working Directory
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center w-full my-2 relative">
+            <AnimatePresence mode="wait">
+              {isWIP ? (
+                <motion.div
+                  key="work-files"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0, y: 40 }}
+                  transition={{ duration: 0.5 }}
+                  className="space-y-1.5 w-full flex flex-col items-center"
+                >
+                  <Laptop className="h-7 w-7 text-slate-400 mb-1" />
+                  {/* File 1 */}
+                  <div className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded px-2 py-1 text-[8px] font-mono text-amber-400">
+                    <span className="truncate">📄 app.js</span>
+                    <span className="text-[7px] bg-amber-500/20 px-1 rounded font-bold font-sans">modified</span>
+                  </div>
+                  {/* File 2 */}
+                  <div className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded px-2 py-1 text-[8px] font-mono text-amber-400">
+                    <span className="truncate">📄 style.css</span>
+                    <span className="text-[7px] bg-amber-500/20 px-1 rounded font-bold font-sans">modified</span>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="clean-dir"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="flex flex-col items-center justify-center space-y-1"
+                >
+                  <div className="relative flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-1">
+                    <motion.div
+                      animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute inset-0 rounded-full border border-emerald-400"
+                    />
+                    <Check className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <span className="text-[9.5px] font-black text-emerald-400">✓ Directory Clean</span>
+                  <span className="text-[7.5px] text-slate-500 font-medium">ไม่มีงานค้างในเครื่อง</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="text-[8px] font-mono text-slate-500 w-full text-center">
+            {isWIP ? "สถานะ: มีไฟล์แก้ไข" : "สถานะ: กิ่งสะอาด"}
+          </div>
         </div>
 
-        {/* Action arrow */}
-        <div className="flex-1 h-0.5 border-t border-dashed border-white/10 mx-2" />
-
-        {/* Stash Safe Box */}
-        <div className="rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-3 w-[135px] h-[155px] flex flex-col items-center justify-between relative shadow-inner">
-          <div className="text-[9px] font-bold text-slate-505 uppercase tracking-widest">Git Stash Safe</div>
-          
-          <AnimatePresence>
-            {isPlaying && step > 0 && step < 3 && (
+        {/* Middle: Conduit Pipeline */}
+        <div className="flex flex-col items-center justify-center flex-1 max-w-[100px] h-12 relative flex-shrink-0">
+          <div className="w-full h-4 bg-slate-950/60 rounded-full border border-white/5 relative overflow-hidden flex items-center">
+            {isPlaying && (step === 1 || step === 2) && (
               <motion.div
-                initial={{ y: -90, scale: 0.4, opacity: 0, rotate: -30 }}
-                animate={{ y: 0, scale: 1, opacity: 1, rotate: 0 }}
-                exit={{ y: -90, scale: 0.4, opacity: 0, rotate: -30 }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-                layoutId="stash-pack"
-                className="h-12 w-10 rounded-lg bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-slate-400 p-1 shadow-lg relative"
-              >
-                <Database className="h-4 w-4 text-indigo-400 animate-pulse" />
-                <span className="text-[7.5px] font-mono mt-0.5 font-bold">stash@{`{0}`}</span>
-                <span className="absolute top-1.5 right-1.5 text-[7px]">🔒</span>
-              </motion.div>
+                initial={{ left: step === 1 ? "-40px" : "100%" }}
+                animate={{ left: step === 1 ? "100%" : "-40px" }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500/35 to-transparent"
+              />
             )}
-          </AnimatePresence>
-          <div />
+            
+            {isPlaying && (
+              <AnimatePresence>
+                {((step === 1 && isStashed) || (step === 2 && !isWIP)) && (
+                  <motion.div
+                    initial={{ left: step === 1 ? "0%" : "80%", scale: 0.6, opacity: 0 }}
+                    animate={{ left: step === 1 ? "80%" : "0%", scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.9, ease: "easeInOut" }}
+                    className="absolute z-10 flex items-center justify-center"
+                  >
+                    <span className="text-[9px] filter drop-shadow-[0_0_4px_#818CF8]">📦</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
+          <div className="text-[7.5px] font-mono text-slate-500 mt-1 select-none font-bold">
+            {step === 1 ? "git stash ➔" : step === 2 ? "◀ stash pop" : "conduit"}
+          </div>
         </div>
 
+        {/* Right: Stash Safe Drawer Stack */}
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4.5 w-[155px] h-[190px] flex flex-col justify-between items-center shadow-xl relative overflow-hidden flex-shrink-0">
+          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 w-full text-center">
+            🗄️ Git Stash Stack
+          </div>
+
+          <div className="w-full flex-1 flex flex-col gap-1.5 justify-center my-2">
+            
+            {/* Drawer 0: stash@{0} */}
+            <div className="w-full h-11 border border-white/5 bg-slate-950/40 rounded p-1.5 flex items-center justify-between relative">
+              <span className="text-[7.5px] font-mono text-indigo-400 font-bold">stash@{"{0}"}</span>
+              
+              <AnimatePresence mode="wait">
+                {isStashed ? (
+                  <motion.div
+                    key="stash-0"
+                    initial={{ scale: 0.7, opacity: 0, x: -20 }}
+                    animate={{ scale: 1, opacity: 1, x: 0 }}
+                    exit={{ scale: 0.7, opacity: 0, x: -20 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex items-center gap-1 bg-indigo-500/10 border border-indigo-500/30 rounded px-1.5 py-0.5"
+                  >
+                    <span className="text-[8px]">📦 WIP</span>
+                    <span className="text-[8px] animate-pulse">🔒</span>
+                  </motion.div>
+                ) : (
+                  <span key="empty-0" className="text-[7.5px] text-slate-650 italic">empty</span>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Drawer 1: stash@{1} */}
+            <div className="w-full h-11 border border-white/5 bg-slate-950/40 rounded p-1.5 flex items-center justify-between opacity-55">
+              <span className="text-[7.5px] font-mono text-slate-500 font-bold">stash@{"{1}"}</span>
+              <div className="flex items-center gap-1 bg-slate-500/10 border border-slate-500/30 rounded px-1.5 py-0.5">
+                <span className="text-[7.5px] text-slate-400 font-mono">📦 feat-auth</span>
+                <span className="text-[7.5px]">🔒</span>
+              </div>
+            </div>
+
+            {/* Drawer 2: stash@{2} */}
+            <div className="w-full h-11 border border-dashed border-white/5 bg-transparent rounded p-1.5 flex items-center justify-between opacity-30">
+              <span className="text-[7.5px] font-mono text-slate-600 font-bold">stash@{"{2}"}</span>
+              <span className="text-[7px] text-slate-650 italic">empty</span>
+            </div>
+
+          </div>
+
+          <div className="text-[8px] font-mono text-slate-500 w-full text-center">
+            {isStashed ? "กล่องเก็บ: 2 Items" : "กล่องเก็บ: 1 Item"}
+          </div>
+        </div>
+
+        {/* Success toast */}
         {isPlaying && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9px] text-indigo-400 font-bold"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute bottom-0 bg-indigo-500/10 border border-indigo-500/20 px-3.5 py-1.5 rounded-full text-[9.5px] text-indigo-400 font-bold shadow"
           >
-            {step === 0 && "เตรียมคัดแยกไฟล์ลงลิ้นชัก..."}
-            {step === 1 && "📥 ซ่อนงานปัจจุบันสำเร็จ! (Working directory ว่างสะอาด)"}
-            {step === 2 && "🔄 กำลังกู้ไฟล์คืนด้วย git stash pop..."}
+            {step === 0 && "📁 กำลังม้วนจัดเก็บไฟล์ลงเก๊ะลิ้นชัก..."}
+            {step === 1 && "📥 ซ่อนงานปัจจุบันสำเร็จ! (Working Directory สะอาดสะอาด)"}
+            {step === 2 && "🔄 กำลังดึงไฟล์ล่าสุดคืนด้วย git stash pop..."}
             {step === 3 && "📤 กู้คืนไฟล์งานล่าสุดกลับมารวมที่เดิมสำเร็จ!"}
           </motion.div>
         )}

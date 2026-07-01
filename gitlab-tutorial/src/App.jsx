@@ -21,11 +21,99 @@ import {
   FolderOpen,
   Cpu,
   Bookmark,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
+  FileText,
+  Lock,
+  ExternalLink,
+  CheckSquare,
+  Square,
   X
 } from "lucide-react";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
+}
+
+function HighlightedCommand({ commandText, outputText, showOutput }) {
+  if (!commandText) return null;
+  const lines = commandText.split("\n");
+
+  return (
+    <div className="font-mono text-left select-all py-1 overflow-x-auto whitespace-pre leading-relaxed text-[11px]">
+      {lines.map((line, lIdx) => {
+        if (line.startsWith("#")) {
+          return (
+            <div key={lIdx} className="text-slate-500 italic text-[10px]">
+              {line}
+            </div>
+          );
+        }
+
+        const tokens = line.split(" ");
+        return (
+          <div key={lIdx} className="flex flex-wrap items-center gap-x-1.5 min-h-[1.5rem]">
+            {lIdx === 0 && <span className="text-emerald-450 font-semibold select-none">$ </span>}
+            {tokens.map((token, tIdx) => {
+              let colorClass = "text-slate-100";
+              if (token === "git") {
+                colorClass = "text-fuchsia-455 font-extrabold";
+              } else if (["config", "init", "clone", "status", "add", "diff", "commit", "checkout", "branch", "merge", "rebase", "push", "pull", "stash", "pop", "tag"].includes(token)) {
+                colorClass = "text-sky-400 font-bold";
+              } else if (token.startsWith("-") || token.startsWith("--")) {
+                colorClass = "text-amber-400 font-medium";
+              } else if (token.startsWith('"') || token.endsWith('"') || token.startsWith("'") || token.endsWith("'")) {
+                colorClass = "text-emerald-455";
+              } else if (token.startsWith("https://") || token.includes("git@")) {
+                colorClass = "text-indigo-300 underline underline-offset-4";
+              } else if (token === "origin" || token === "master" || token === "main") {
+                colorClass = "text-teal-355 font-semibold";
+              }
+              return (
+                <span key={tIdx} className={colorClass}>
+                  {token}
+                </span>
+              );
+            })}
+          </div>
+        );
+      })}
+
+      {/* Render Git Command Output Lines on Success */}
+      <AnimatePresence>
+        {showOutput && outputText && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            transition={{ duration: 0.4 }}
+            className="border-t border-white/5 mt-2 pt-2 text-slate-455 border-dashed"
+          >
+            {outputText.split("\n").map((oLine, oIdx) => {
+              let lineClass = "text-slate-450";
+              if (oLine.startsWith("#")) {
+                lineClass = "text-emerald-400/90 font-bold italic";
+              } else if (oLine.startsWith("$")) {
+                lineClass = "text-fuchsia-455 font-bold";
+              } else if (oLine.includes("modified:") || oLine.includes("Changes not staged:") || oLine.startsWith("-")) {
+                lineClass = "text-red-400 font-semibold";
+              } else if (oLine.includes("Untracked files:") || oLine.includes("app.jsx") || oLine.startsWith("+") || oLine.includes("[new tag]")) {
+                lineClass = "text-emerald-400 font-semibold";
+              } else if (oLine.includes("Fast-forward") || oLine.includes("files changed")) {
+                lineClass = "text-emerald-355 font-bold";
+              }
+              
+              return (
+                <div key={oIdx} className={cn("min-h-[1.2rem]", lineClass)}>
+                  {oLine}
+                </div>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 const CATEGORIES_CONFIG = [
@@ -87,7 +175,7 @@ const COMMANDS = {
     ],
     explanation: [
       "สร้างโฟลเดอร์ระบบซ่อนชื่อ .git ขึ้นมาเพื่อจัดเก็บไฟล์ประวัติ",
-      "เป็นจุดเริ่มต้นในการทำงาน of Git บนเครื่องของตนเอง",
+      "เป็นจุดเริ่มต้นในการทำงานของ Git บนเครื่องของตนเอง",
       "เครื่องจะเตรียมกิ่งหลักเริ่มต้นขึ้นมารอใช้ในสถานะ Offline"
     ],
     successOutput: (params) => `Initialized empty Git repository in C:/projects/${params.project || "my-web-app"}/.git/\n# สร้างฐานข้อมูลติดตามประวัติเรียบร้อย!`
@@ -365,87 +453,8 @@ const COMMANDS = {
   }
 };
 
-function HighlightedCommand({ commandText, outputText, showOutput }) {
-  if (!commandText) return null;
-  const lines = commandText.split("\n");
-
-  return (
-    <div className="font-mono text-left select-all py-1 overflow-x-auto whitespace-pre leading-relaxed text-[11px]">
-      {lines.map((line, lIdx) => {
-        if (line.startsWith("#")) {
-          return (
-            <div key={lIdx} className="text-slate-500 italic text-[10px]">
-              {line}
-            </div>
-          );
-        }
-
-        const tokens = line.split(" ");
-        return (
-          <div key={lIdx} className="flex flex-wrap items-center gap-x-1.5 min-h-[1.5rem]">
-            {lIdx === 0 && <span className="text-emerald-450 font-semibold select-none">$ </span>}
-            {tokens.map((token, tIdx) => {
-              let colorClass = "text-slate-100";
-              if (token === "git") {
-                colorClass = "text-fuchsia-450 font-extrabold";
-              } else if (["config", "init", "clone", "status", "add", "diff", "commit", "checkout", "branch", "merge", "rebase", "push", "pull", "stash", "pop", "tag"].includes(token)) {
-                colorClass = "text-sky-400 font-bold";
-              } else if (token.startsWith("-") || token.startsWith("--")) {
-                colorClass = "text-amber-400 font-medium";
-              } else if (token.startsWith('"') || token.endsWith('"') || token.startsWith("'") || token.endsWith("'")) {
-                colorClass = "text-emerald-450";
-              } else if (token.startsWith("https://") || token.includes("git@")) {
-                colorClass = "text-indigo-300 underline underline-offset-4";
-              } else if (token === "origin" || token === "master" || token === "main") {
-                colorClass = "text-teal-355 font-semibold";
-              }
-              return (
-                <span key={tIdx} className={colorClass}>
-                  {token}
-                </span>
-              );
-            })}
-          </div>
-        );
-      })}
-
-      {/* Render Git Command Output Lines on Success */}
-      <AnimatePresence>
-        {showOutput && outputText && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            transition={{ duration: 0.4 }}
-            className="border-t border-white/5 mt-2 pt-2 text-slate-455 border-dashed"
-          >
-            {outputText.split("\n").map((oLine, oIdx) => {
-              let lineClass = "text-slate-400";
-              if (oLine.startsWith("#")) {
-                lineClass = "text-emerald-400/90 font-bold italic";
-              } else if (oLine.startsWith("$")) {
-                lineClass = "text-fuchsia-455 font-bold";
-              } else if (oLine.includes("modified:") || oLine.includes("Changes not staged:") || oLine.startsWith("-")) {
-                lineClass = "text-red-400 font-semibold";
-              } else if (oLine.includes("Untracked files:") || oLine.includes("app.jsx") || oLine.startsWith("+") || oLine.includes("[new tag]")) {
-                lineClass = "text-emerald-400 font-semibold";
-              } else if (oLine.includes("Fast-forward") || oLine.includes("files changed")) {
-                lineClass = "text-emerald-355 font-bold";
-              }
-              
-              return (
-                <div key={oIdx} className={cn("min-h-[1.2rem]", lineClass)}>
-                  {oLine}
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 export default function App() {
+  const [viewMode, setViewMode] = useState("simulator"); // "simulator" or "guide"
   const [selectedCategory, setSelectedCategory] = useState("1. การตั้งค่า (Configuration)");
   const [selectedKey, setSelectedKey] = useState("config");
   const [copied, setCopied] = useState(false);
@@ -454,6 +463,12 @@ export default function App() {
   const [animationStep, setAnimationStep] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [triggerKey, setTriggerKey] = useState(0);
+
+  // Guide specific states
+  const [selectedGuidePhase, setSelectedGuidePhase] = useState("scenario"); // "scenario", 1-7, "errors", "quickstart"
+  const [authMethod, setAuthMethod] = useState("ssh"); // "ssh" or "https"
+  const [checkedGuideSteps, setCheckedGuideSteps] = useState({});
+  const [copiedGuideText, setCopiedGuideText] = useState("");
 
   const selectedCommand = COMMANDS[selectedKey];
 
@@ -478,25 +493,40 @@ export default function App() {
   }, [selectedKey]);
 
   useEffect(() => {
-    setIsAnimating(true);
-    setAnimationStep(0);
+    if (viewMode === "simulator") {
+      setIsAnimating(true);
+      setAnimationStep(0);
 
-    const t1 = setTimeout(() => setAnimationStep(1), 1200);
-    const t2 = setTimeout(() => setAnimationStep(2), 2600);
-    const t3 = setTimeout(() => setAnimationStep(3), 4000);
+      const t1 = setTimeout(() => setAnimationStep(1), 1200);
+      const t2 = setTimeout(() => setAnimationStep(2), 2600);
+      const t3 = setTimeout(() => setAnimationStep(3), 4000);
 
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [selectedKey, triggerKey]);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [selectedKey, triggerKey, viewMode]);
 
   const copyToClipboard = () => {
     const rawCommand = selectedCommand.command(params);
     navigator.clipboard.writeText(rawCommand);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyGuideCommand = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopiedGuideText(key);
+    setTimeout(() => setCopiedGuideText(""), 2000);
+  };
+
+  const toggleGuideStepCheck = (key) => {
+    setCheckedGuideSteps(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
 
   const handleParamChange = (key, val) => {
@@ -513,7 +543,7 @@ export default function App() {
   }, [selectedCategory]);
 
   return (
-    <div className="relative min-h-screen lg:h-screen lg:overflow-hidden p-6 md:p-7 lg:p-8 flex flex-col gap-4 text-slate-800 bg-[radial-gradient(circle_at_15%_15%,rgba(199,210,254,0.55),transparent_35%),radial-gradient(circle_at_85%_15%,rgba(216,180,254,0.45),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(167,243,208,0.3),transparent_40%),linear-gradient(135deg,#f0f4fa,#fafcff_45%,#fff9fd)]">
+    <div className="relative min-h-screen lg:h-screen lg:overflow-hidden p-6 md:p-7 lg:p-8 flex flex-col gap-4 text-slate-800 bg-[radial-gradient(circle_at_15%_15%,rgba(199,210,254,0.55),transparent_35%),radial-gradient(circle_at_85%_15%,rgba(216,180,254,0.45),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(167,243,208,0.3),transparent_40%),linear-gradient(135deg,#f0f4fa,#fafcff_45%,#fff9fd)] font-sans">
       
       {/* Background Animated Gradient Mesh */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
@@ -547,231 +577,592 @@ export default function App() {
         className="relative z-10 rounded-xl border border-white/50 bg-white/20 p-4 shadow-xl backdrop-blur-3xl flex flex-col gap-3 md:flex-row md:items-center md:justify-between flex-shrink-0"
       >
         <div className="space-y-0.5">
-          <h1 className="text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 bg-clip-text text-transparent">
+          <h1 className="text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 bg-clip-text text-transparent flex items-center gap-2">
             GitLab Commands Visual Simulator ⚡
           </h1>
-          <p className="text-[10px] text-slate-500 font-bold">บอร์ดแอนิเมชันคำสั่ง Git อ้างอิงตามโครงสร้าง GitLab Git Cheat Sheet คู่มือทางการ</p>
+          <p className="text-[10px] text-slate-500 font-bold">บอร์ดแอนิเมชันคำสั่ง Git และคู่มือเริ่มต้นการอัปโหลดเชื่อมต่อไปยัง GitLab</p>
         </div>
 
+        {/* View mode switcher */}
         <div className="flex gap-2">
-          <div className="rounded-lg border border-white/45 bg-white/45 px-3 py-1.5 flex items-center gap-2 shadow-sm text-[10px] font-bold text-slate-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse" />
-            <span>GitLab Link Host</span>
+          <div className="flex rounded-lg border border-slate-200 bg-white/50 p-1 shadow-sm">
+            <button
+              onClick={() => setViewMode("simulator")}
+              className={cn(
+                "rounded-md px-3.5 py-1.5 text-[10px] font-black cursor-pointer transition-all duration-200 flex items-center gap-1.5",
+                viewMode === "simulator"
+                  ? "bg-slate-900 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <Terminal className="h-3.5 w-3.5" />
+              <span>Git Simulator</span>
+            </button>
+            <button
+              onClick={() => setViewMode("guide")}
+              className={cn(
+                "rounded-md px-3.5 py-1.5 text-[10px] font-black cursor-pointer transition-all duration-200 flex items-center gap-1.5",
+                viewMode === "guide"
+                  ? "bg-slate-900 text-white shadow-md"
+                  : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>GitLab Setup Guide</span>
+            </button>
           </div>
         </div>
       </motion.header>
 
-      {/* Category Segmented Control Navigation - High End stripe feel */}
-      <div className="relative z-10 overflow-x-auto no-scrollbar py-0.5 flex-shrink-0 flex gap-2">
-        <div className="flex gap-2 p-1.5 rounded-xl border border-slate-200/50 bg-white/40 backdrop-blur-2xl w-max shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-          {CATEGORIES_CONFIG.map((cat) => {
-            const isSelected = selectedCategory === cat.name;
-            const Icon = cat.icon;
-            return (
-              <button 
-                key={cat.name} 
-                onClick={() => handleCategorySelect(cat.name)} 
-                className={cn(
-                  "relative z-10 rounded-lg px-4 py-2.5 text-[9.5px] font-extrabold uppercase tracking-wider transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-2 select-none",
-                  isSelected 
-                    ? "text-slate-950 font-black" 
-                    : "text-slate-500 hover:text-slate-800 hover:-translate-y-0.5"
-                )}
-              >
-                <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-indigo-600" : "text-slate-400")} />
-                <span>{cat.label}</span>
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeCategoryPill"
-                    className="absolute inset-0 z-[-1] rounded-lg bg-white border border-white/80 shadow-[0_3px_10px_rgba(0,0,0,0.05)]"
-                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Selected Category Command Pills Grid - Linear/Vercel styling */}
-      <div className="relative z-10 flex gap-2.5 flex-wrap flex-shrink-0">
-        {activeCategoryCommands.map((cmd) => {
-          const isSelected = selectedKey === cmd.id;
-          const CmdIcon = cmd.icon || Code;
-          return (
-            <button
-              key={cmd.id}
-              onClick={() => setSelectedKey(cmd.id)}
-              className={cn(
-                "rounded-lg px-4 py-3 text-[10px] font-bold font-mono transition-all duration-200 cursor-pointer flex items-center gap-2 select-none border active:scale-97",
-                isSelected
-                  ? "bg-gradient-to-r from-indigo-600 via-indigo-650 to-violet-600 border-indigo-500 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)] scale-[1.02]"
-                  : "bg-white/40 border-slate-200/50 hover:border-slate-350 text-slate-700 hover:text-slate-950 hover:bg-white/70 hover:-translate-y-0.5 hover:shadow-sm"
-              )}
-            >
-              <span className={cn("font-mono text-[9px] opacity-60 font-medium", isSelected ? "text-indigo-200" : "text-slate-400")}>$</span>
-              <CmdIcon className={cn("h-3.5 w-3.5", isSelected ? "text-white" : "text-slate-500")} />
-              <span>{cmd.title}</span>
-              {isSelected && (
-                <motion.span 
-                  layoutId="activeDot"
-                  className="h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse"
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Main workspace - Side by Side layout */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 relative z-10 overflow-hidden">
-        
-        {/* Left Side: Visualizer Canvas Card */}
-        <div className="rounded-xl flex-1 min-h-0 bg-white/20 border border-white/50 shadow-xl backdrop-blur-3xl p-5 flex flex-col justify-between overflow-hidden relative">
-          
-          {/* Visualizer Floating Headers */}
-          <div className="flex items-center justify-between flex-shrink-0 z-10 pb-2 border-b border-slate-300/10">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-black text-slate-800">{selectedCommand.title}</span>
-              <span className="text-[10px] text-slate-405 font-semibold truncate">({selectedCommand.subtitle})</span>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => setShowHint((prev) => !prev)}
-                className={cn(
-                  "rounded-lg px-3.5 py-1.5 text-[10px] font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm border",
-                  showHint 
-                    ? "bg-slate-900 text-white border-slate-900" 
-                    : "bg-white/60 hover:bg-white text-slate-700 border-white/50"
-                )}
-              >
-                💡 คำอธิบาย (Hint)
-              </button>
-              <button
-                onClick={triggerAnimationManual}
-                className="rounded-lg bg-slate-950 text-white text-[10px] font-bold px-3 py-1.5 hover:bg-slate-800 shadow-md active:scale-97 transition cursor-pointer flex items-center gap-1"
-              >
-                <Play className="h-3 w-3 fill-current text-emerald-455" /> เล่นใหม่
-              </button>
+      {/* Main Workspace based on select view */}
+      {viewMode === "simulator" ? (
+        <>
+          {/* Category Segmented Control Navigation - High End stripe feel */}
+          <div className="relative z-10 overflow-x-auto no-scrollbar py-0.5 flex-shrink-0 flex gap-2">
+            <div className="flex gap-2 p-1.5 rounded-xl border border-slate-200/50 bg-white/40 backdrop-blur-2xl w-max shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+              {CATEGORIES_CONFIG.map((cat) => {
+                const isSelected = selectedCategory === cat.name;
+                const Icon = cat.icon;
+                return (
+                  <button 
+                    key={cat.name} 
+                    onClick={() => handleCategorySelect(cat.name)} 
+                    className={cn(
+                      "relative z-10 rounded-lg px-4 py-2.5 text-[9.5px] font-extrabold uppercase tracking-wider transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-2 select-none",
+                      isSelected 
+                        ? "text-slate-950 font-black" 
+                        : "text-slate-500 hover:text-slate-800 hover:-translate-y-0.5"
+                    )}
+                  >
+                    <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-indigo-600" : "text-slate-400")} />
+                    <span>{cat.label}</span>
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeCategoryPill"
+                        className="absolute inset-0 z-[-1] rounded-lg bg-white border border-white/80 shadow-[0_3px_10px_rgba(0,0,0,0.05)]"
+                        transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Sandbox Animation Viewport */}
-          <div className="flex-1 min-h-0 w-full rounded-lg border border-white/15 bg-slate-950/95 overflow-hidden flex flex-col justify-between p-4 my-3.5 relative">
-            <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
-
-            <AnimationSandbox type={selectedCommand.id} isPlaying={isAnimating} step={animationStep} params={params} />
-
-            {/* Floating Glass Hint Popover */}
-            <AnimatePresence>
-              {showHint && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.96, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, y: -10 }}
-                  className="absolute inset-x-4 top-4 rounded-lg border border-white/20 bg-slate-900/90 p-4 shadow-2xl backdrop-blur-xl text-white space-y-3 z-30 max-h-[90%] overflow-y-auto no-scrollbar"
+          {/* Selected Category Command Pills Grid - Linear/Vercel styling */}
+          <div className="relative z-10 flex gap-2.5 flex-wrap flex-shrink-0">
+            {activeCategoryCommands.map((cmd) => {
+              const isSelected = selectedKey === cmd.id;
+              const CmdIcon = cmd.icon || Code;
+              return (
+                <button
+                  key={cmd.id}
+                  onClick={() => setSelectedKey(cmd.id)}
+                  className={cn(
+                    "rounded-lg px-4 py-3 text-[10px] font-bold font-mono transition-all duration-200 cursor-pointer flex items-center gap-2 select-none border active:scale-97",
+                    isSelected
+                      ? "bg-gradient-to-r from-indigo-600 via-indigo-650 to-violet-600 border-indigo-500 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)] scale-[1.02]"
+                      : "bg-white/40 border-slate-200/50 hover:border-slate-350 text-slate-700 hover:text-slate-950 hover:bg-white/70 hover:-translate-y-0.5 hover:shadow-sm"
+                  )}
                 >
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h4 className="text-xs font-black tracking-tight text-indigo-400 flex items-center gap-1.5">
-                      💡 คำอธิบายเกี่ยวกับ {selectedCommand.title}
-                    </h4>
-                    <button 
-                      onClick={() => setShowHint(false)} 
-                      className="rounded-full p-1 bg-white/10 hover:bg-white/20 active:scale-95 text-slate-300 transition cursor-pointer"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <p className="text-[11px] leading-relaxed font-medium text-slate-200">{selectedCommand.description}</p>
-                  
-                  <div className="grid gap-1.5 text-[10px] text-slate-400 font-semibold pt-1">
-                    {selectedCommand.explanation.map((exp, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <span className="text-indigo-400 font-bold">✓</span>
-                        <span className="leading-tight">{exp}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <span className={cn("font-mono text-[9px] opacity-60 font-medium", isSelected ? "text-indigo-200" : "text-slate-400")}>$</span>
+                  <CmdIcon className={cn("h-3.5 w-3.5", isSelected ? "text-white" : "text-slate-500")} />
+                  <span>{cmd.title}</span>
+                  {isSelected && (
+                    <motion.span 
+                      layoutId="activeDot"
+                      className="h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse"
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Dynamic Parameter Settings bar inside the Visualizer Card */}
-          <AnimatePresence mode="wait">
-            {selectedCommand.parameters.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="rounded-lg border border-white/35 bg-white/20 p-2.5 backdrop-blur-xl shadow-inner flex-shrink-0 overflow-hidden mb-1"
-              >
-                <div className="flex flex-wrap items-center gap-3.5 px-1.5">
-                  <span className="text-[9px] font-extrabold text-indigo-650 uppercase tracking-widest flex items-center gap-1.5 select-none">
-                    <Settings className="h-3.5 w-3.5" /> อาร์กิวเมนต์จำลอง:
-                  </span>
-                  <div className="flex-1 flex gap-3">
-                    {selectedCommand.parameters.map((p) => (
-                      <div key={p.key} className="bg-white/80 rounded-lg px-3 py-1 border border-slate-200 shadow-sm flex items-center gap-2">
-                        <label className="text-[8px] font-extrabold text-indigo-500 uppercase tracking-widest">{p.label}:</label>
-                        <input
-                          type={p.type}
-                          value={params[p.key] || ""}
-                          onChange={(e) => handleParamChange(p.key, e.target.value)}
-                          className="bg-transparent text-[10px] text-slate-800 font-extrabold outline-none w-[120px]"
-                        />
+          {/* Main workspace - Side by Side layout */}
+          <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 relative z-10 overflow-hidden">
+            
+            {/* Left Side: Visualizer Canvas Card */}
+            <div className="rounded-xl flex-1 min-h-0 bg-white/20 border border-white/50 shadow-xl backdrop-blur-3xl p-5 flex flex-col justify-between overflow-hidden relative">
+              
+              {/* Visualizer Floating Headers */}
+              <div className="flex items-center justify-between flex-shrink-0 z-10 pb-2 border-b border-slate-300/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-black text-slate-800">{selectedCommand.title}</span>
+                  <span className="text-[10px] text-slate-405 font-semibold truncate">({selectedCommand.subtitle})</span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setShowHint((prev) => !prev)}
+                    className={cn(
+                      "rounded-lg px-3.5 py-1.5 text-[10px] font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 shadow-sm border",
+                      showHint 
+                        ? "bg-slate-900 text-white border-slate-900" 
+                        : "bg-white/60 hover:bg-white text-slate-700 border-white/50"
+                    )}
+                  >
+                    💡 คำอธิบาย (Hint)
+                  </button>
+                  <button
+                    onClick={triggerAnimationManual}
+                    className="rounded-lg bg-slate-950 text-white text-[10px] font-bold px-3 py-1.5 hover:bg-slate-800 shadow-md active:scale-97 transition cursor-pointer flex items-center gap-1"
+                  >
+                    <Play className="h-3 w-3 fill-current text-emerald-455" /> เล่นใหม่
+                  </button>
+                </div>
+              </div>
+
+              {/* Sandbox Animation Viewport */}
+              <div className="flex-1 min-h-0 w-full rounded-lg border border-white/15 bg-slate-950/95 overflow-hidden flex flex-col justify-between p-4 my-3.5 relative">
+                <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px)", backgroundSize: "30px 30px" }} />
+
+                <AnimationSandbox type={selectedCommand.id} isPlaying={isAnimating} step={animationStep} params={params} />
+
+                {/* Floating Glass Hint Popover */}
+                <AnimatePresence>
+                  {showHint && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96, y: -10 }}
+                      className="absolute inset-x-4 top-4 rounded-lg border border-white/20 bg-slate-900/90 p-4 shadow-2xl backdrop-blur-xl text-white space-y-3 z-30 max-h-[90%] overflow-y-auto no-scrollbar"
+                    >
+                      <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                        <h4 className="text-xs font-black tracking-tight text-indigo-400 flex items-center gap-1.5">
+                          💡 คำอธิบายเกี่ยวกับ {selectedCommand.title}
+                        </h4>
+                        <button 
+                          onClick={() => setShowHint(false)} 
+                          className="rounded-full p-1 bg-white/10 hover:bg-white/20 active:scale-95 text-slate-300 transition cursor-pointer"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-                    ))}
+                      <p className="text-[11px] leading-relaxed font-medium text-slate-200">{selectedCommand.description}</p>
+                      
+                      <div className="grid gap-1.5 text-[10px] text-slate-405 font-semibold pt-1">
+                        {selectedCommand.explanation.map((exp, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <span className="text-indigo-400 font-bold">✓</span>
+                            <span className="leading-tight">{exp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Dynamic Parameter Settings bar inside the Visualizer Card */}
+              <AnimatePresence mode="wait">
+                {selectedCommand.parameters.length > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="rounded-lg border border-white/35 bg-white/20 p-2.5 backdrop-blur-xl shadow-inner flex-shrink-0 overflow-hidden mb-1"
+                  >
+                    <div className="flex flex-wrap items-center gap-3.5 px-1.5">
+                      <span className="text-[9px] font-extrabold text-indigo-650 uppercase tracking-widest flex items-center gap-1.5 select-none">
+                        <Settings className="h-3.5 w-3.5" /> อาร์กิวเมนต์จำลอง:
+                      </span>
+                      <div className="flex-1 flex gap-3">
+                        {selectedCommand.parameters.map((p) => (
+                          <div key={p.key} className="bg-white/80 rounded-lg px-3 py-1 border border-slate-200 shadow-sm flex items-center gap-2">
+                            <label className="text-[8px] font-extrabold text-indigo-500 uppercase tracking-widest">{p.label}:</label>
+                            <input
+                              type={p.type}
+                              value={params[p.key] || ""}
+                              onChange={(e) => handleParamChange(p.key, e.target.value)}
+                              className="bg-transparent text-[10px] text-slate-800 font-extrabold outline-none w-[120px]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+            </div>
+
+            {/* Right Side: Terminal Console Mockup */}
+            <div className="w-full lg:w-[420px] rounded-xl bg-[#090A14] p-4 text-white text-[11px] border border-white/5 shadow-2xl relative flex-shrink-0 h-[240px] lg:h-auto flex flex-col justify-between overflow-hidden">
+              <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-2 text-slate-500 font-mono text-[8px] select-none flex-shrink-0">
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#ff5f57]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#ffbd2e]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#28c840]" />
+                  <span className="ml-1 font-semibold text-slate-500">terminal-console-output</span>
+                </div>
+                <Terminal className="h-3.5 w-3.5 text-slate-500" />
+              </div>
+
+              <div className="flex-1 overflow-y-auto no-scrollbar pb-1">
+                <HighlightedCommand 
+                  commandText={selectedCommand.command(params)} 
+                  outputText={selectedCommand.successOutput ? selectedCommand.successOutput(params, animationStep) : ""}
+                  showOutput={isAnimating && animationStep >= (selectedCommand.id === "status" || selectedCommand.id === "diff" || selectedCommand.id === "branch_list" ? 0 : 2)}
+                />
+              </div>
+
+              <div className="flex-shrink-0 pt-2 border-t border-white/5 flex items-center justify-between text-[8.5px] text-slate-500 font-mono select-none">
+                <span>Lines: {selectedCommand.command(params).split("\n").length}</span>
+                <button
+                  onClick={copyToClipboard}
+                  className="bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-2 py-1 rounded border border-white/10 transition cursor-pointer flex items-center gap-1"
+                  title="คัดลอกคำสั่ง"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3 w-3 text-emerald-450" /> คัดลอกแล้ว
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" /> คัดลอกโค้ด
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </>
+      ) : (
+        /* GitLab Setup Guide View Mode */
+        <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4 relative z-10 overflow-hidden">
+          
+          {/* Stepper Phase Menu (Left side) */}
+          <aside className="w-full md:w-[280px] flex-shrink-0 flex flex-col gap-2 overflow-y-auto no-scrollbar rounded-xl border border-white/50 bg-white/20 p-3.5 backdrop-blur-3xl shadow-xl">
+            <div className="text-[10px] font-black text-indigo-750 uppercase tracking-widest px-1 pb-2 border-b border-slate-350/10 select-none">
+              📁 สารบัญคู่มือใช้งาน:
+            </div>
+            
+            <div className="space-y-1 mt-1">
+              <button
+                onClick={() => setSelectedGuidePhase("scenario")}
+                className={cn(
+                  "w-full text-left rounded-lg px-3 py-2.5 text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-2",
+                  selectedGuidePhase === "scenario"
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "text-slate-600 hover:bg-white/50"
+                )}
+              >
+                <span>🎯 Target Scenario</span>
+              </button>
+
+              {[1, 2, 3, 4, 5, 6, 7].map(phaseNum => (
+                <button
+                  key={phaseNum}
+                  onClick={() => setSelectedGuidePhase(phaseNum)}
+                  className={cn(
+                    "w-full text-left rounded-lg px-3 py-2.5 text-[10px] font-extrabold cursor-pointer transition-all flex items-center justify-between",
+                    selectedGuidePhase === phaseNum
+                      ? "bg-slate-900 text-white shadow-md"
+                      : "text-slate-605 hover:bg-white/50"
+                  )}
+                >
+                  <span className="truncate">Phase {phaseNum}: {
+                    phaseNum === 1 ? "Setup Git ในเครื่อง" :
+                    phaseNum === 2 ? "Authentication" :
+                    phaseNum === 3 ? "Setup Project" :
+                    phaseNum === 4 ? "เชื่อม GitLab" :
+                    phaseNum === 5 ? "Sync Repository" :
+                    phaseNum === 6 ? "Commit & Push" : "Daily Workflow"
+                  }</span>
+                </button>
+              ))}
+
+              <button
+                onClick={() => setSelectedGuidePhase("errors")}
+                className={cn(
+                  "w-full text-left rounded-lg px-3 py-2.5 text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-2",
+                  selectedGuidePhase === "errors"
+                    ? "bg-red-950 text-red-200 shadow-md border border-red-800"
+                    : "text-red-500 hover:bg-red-50/50"
+                )}
+              >
+                <span>❗ ERROR ที่พบบ่อย</span>
+              </button>
+
+              <button
+                onClick={() => setSelectedGuidePhase("quickstart")}
+                className={cn(
+                  "w-full text-left rounded-lg px-3 py-2.5 text-[10px] font-extrabold cursor-pointer transition-all flex items-center gap-2",
+                  selectedGuidePhase === "quickstart"
+                    ? "bg-indigo-950 text-indigo-200 shadow-md border border-indigo-800"
+                    : "text-indigo-600 hover:bg-indigo-50/50"
+                )}
+              >
+                <span>🚀 QUICK START (ชุดรวดเร็ว)</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* Guide Content details (Right side) */}
+          <main className="flex-1 min-h-0 bg-white/20 border border-white/50 shadow-xl backdrop-blur-3xl p-5 rounded-xl flex flex-col gap-4 overflow-y-auto no-scrollbar relative">
+            
+            {/* 1. SCENARIO DETAILED PANEL */}
+            {selectedGuidePhase === "scenario" && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-300/10 pb-2">
+                  <h2 className="text-sm font-black text-slate-900">🎯 GitLab & Git Starter Guide (Scenario)</h2>
+                  <p className="text-[10px] text-slate-500 font-medium">คู่มืออ้างอิงและประยุกต์ใช้งานจากเอกสาร [gitlab_guide.md]</p>
+                </div>
+                <div className="bg-white/50 rounded-xl p-4.5 border border-white/80 space-y-3.5 shadow-sm">
+                  <h3 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                    <Info className="h-4 w-4 text-indigo-500" /> สถานการณ์การเริ่มโครงการ (Project Conditions):
+                  </h3>
+                  <div className="grid gap-2.5 text-[11px] font-semibold text-slate-600 pl-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                      <span>มีโฟลเดอร์โปรเจกต์งานอยู่แล้วภายในเครื่องคอมพิวเตอร์</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                      <span>คลังโค้ดปลายทางบน GitLab Server ถูกจัดทำขึ้นมาแล้วและมีไฟล์ README</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                      <span>สามารถตั้งค่าเชื่อมส่งข้อมูลได้ทั้งโปรโตคอล SSH (แนะนำที่สุด) และ HTTPS</span>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+
+            {/* 2. DYNAMIC PHASES 1-7 */}
+            {typeof selectedGuidePhase === "number" && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-300/10 pb-2 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-black text-slate-900">
+                      {selectedGuidePhase === 1 && "✅ PHASE 1: Setup Git (ตั้งค่าระบบเครื่องครั้งแรก)"}
+                      {selectedGuidePhase === 2 && "✅ PHASE 2: Setup Authentication (ยืนยันสิทธิ์เข้าเครื่อง)"}
+                      {selectedGuidePhase === 3 && "✅ PHASE 3: Setup Project (เตรียมฐานข้อมูลในโปรเจกต์)"}
+                      {selectedGuidePhase === 4 && "✅ PHASE 4: เชื่อม GitLab Remote"}
+                      {selectedGuidePhase === 5 && "✅ PHASE 5: Sync Repo (ซิงค์ประสานงานดั้งเดิม)"}
+                      {selectedGuidePhase === 6 && "✅ PHASE 6: Commit & Push (บันทึกนำส่งเวอร์ชันแรก)"}
+                      {selectedGuidePhase === 7 && "✅ PHASE 7: Daily Workflow (วงจรอัปเดตงานประจำวัน)"}
+                    </h2>
+                    <p className="text-[10px] text-slate-500 font-medium">ทำตามลำดับขั้นตอนย่อยด้านล่างเพื่อเชื่อมโปรเจกต์สมบูรณ์</p>
+                  </div>
+                </div>
+
+                {/* Special Toggle Tabs for Phase 2 (SSH vs HTTPS switcher) */}
+                {selectedGuidePhase === 2 && (
+                  <div className="flex rounded-lg border border-slate-200 bg-white/40 p-1 w-fit mb-2 shadow-sm">
+                    <button
+                      onClick={() => setAuthMethod("ssh")}
+                      className={cn(
+                        "rounded-md px-3 py-1.5 text-[9px] font-black cursor-pointer transition-all flex items-center gap-1",
+                        authMethod === "ssh" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+                      )}
+                    >
+                      <Lock className="h-3 w-3" /> วิธีที่ 1: SSH (แนะนำ ⭐)
+                    </button>
+                    <button
+                      onClick={() => setAuthMethod("https")}
+                      className={cn(
+                        "rounded-md px-3 py-1.5 text-[9px] font-black cursor-pointer transition-all flex items-center gap-1",
+                        authMethod === "https" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-805"
+                      )}
+                    >
+                      <Server className="h-3 w-3" /> วิธีที่ 2: HTTPS
+                    </button>
+                  </div>
+                )}
+
+                {/* Render Phase Steps */}
+                <div className="space-y-4">
+                  {getGuideStepsForPhase(selectedGuidePhase, authMethod).map((step, idx) => {
+                    const stepKey = `phase-${selectedGuidePhase}-${authMethod}-${idx}`;
+                    const isChecked = !!checkedGuideSteps[stepKey];
+                    return (
+                      <div 
+                        key={idx} 
+                        className={cn(
+                          "rounded-xl p-4 border transition-all duration-200 shadow-sm flex flex-col gap-3",
+                          isChecked 
+                            ? "bg-emerald-50/30 border-emerald-305/70" 
+                            : "bg-white/60 border-slate-200"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-2.5">
+                            {/* Checkbox Icon button */}
+                            <button 
+                              onClick={() => toggleGuideStepCheck(stepKey)}
+                              className="text-slate-400 hover:text-indigo-600 mt-0.5 transition active:scale-90 cursor-pointer"
+                            >
+                              {isChecked ? (
+                                <CheckSquare className="h-4.5 w-4.5 text-emerald-500" />
+                              ) : (
+                                <Square className="h-4.5 w-4.5" />
+                              )}
+                            </button>
+                            <div>
+                              <h4 className={cn("text-[11.5px] font-black tracking-tight", isChecked ? "text-slate-800 line-through opacity-70" : "text-slate-900")}>
+                                {step.title}
+                              </h4>
+                              {step.desc && (
+                                <p className="text-[10px] text-slate-500 font-bold mt-1 pl-0.5">{step.desc}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* If step has CLI command code, show terminal copy block */}
+                        {step.command && (
+                          <div className="rounded-lg bg-[#0C0E1A] border border-white/5 p-3 flex items-center justify-between text-white font-mono text-[10px] relative">
+                            <span className="select-all overflow-x-auto whitespace-pre no-scrollbar flex-1 pr-4 leading-normal">{step.command}</span>
+                            <button
+                              onClick={() => copyGuideCommand(step.command, stepKey)}
+                              className="bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white p-1 rounded border border-white/10 transition cursor-pointer"
+                              title="คัดลอกโค้ดคำสั่ง"
+                            >
+                              {copiedGuideText === stepKey ? (
+                                <Check className="h-3 w-3 text-emerald-450" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Extra informational tip */}
+                        {step.tip && (
+                          <div className="text-[9.5px] text-slate-500 font-bold flex items-center gap-1.5 pl-1">
+                            <Info className="h-3.5 w-3.5 text-indigo-505" />
+                            <span>{step.tip}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 3. SOLVE ERRORS LIST */}
+            {selectedGuidePhase === "errors" && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-300/10 pb-2">
+                  <h2 className="text-sm font-black text-red-600 flex items-center gap-1.5">
+                    <AlertTriangle className="h-4.5 w-4.5 animate-bounce" /> ❗ ERROR ที่พบบ่อยและวิธีแก้ไข (Troubleshooting)
+                  </h2>
+                  <p className="text-[10px] text-slate-500 font-medium">รวมข้อผิดพลาดหลักขณะเชื่อมต่อเซิร์ฟเวอร์ และบรรทัดคำสั่งที่ช่วยแก้ปัญหา</p>
+                </div>
+
+                <div className="space-y-4.5">
+                  {/* Error 1 */}
+                  <div className="rounded-xl border border-red-200/50 bg-red-50/10 p-4 space-y-2.5">
+                    <h3 className="text-xs font-black text-red-755">1. error: pathspec 'main' did not match any file(s) / no upstream branch</h3>
+                    <p className="text-[10.5px] text-slate-600 font-bold pl-1">เกิดจากยังไม่เคยตั้งกิ่งหลักเริ่มต้นขึ้นเครื่อง หรือไม่ได้จับคู่กิ่งปลายทาง ให้รันคำสั่งแก้ไข:</p>
+                    <div className="rounded-lg bg-[#0C0E1A] p-3 text-[10px] font-mono text-white flex items-center justify-between">
+                      <span>git push -u origin main</span>
+                      <button 
+                        onClick={() => copyGuideCommand("git push -u origin main", "err-1")}
+                        className="bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white p-1 rounded border border-white/10"
+                      >
+                        {copiedGuideText === "err-1" ? <Check className="h-3 w-3 text-emerald-450" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error 2 */}
+                  <div className="rounded-xl border border-red-200/50 bg-red-50/10 p-4 space-y-2.5">
+                    <h3 className="text-xs font-black text-red-755">2. Fatal: SSL Certificate Problem (HTTPS SSL Error)</h3>
+                    <p className="text-[10.5px] text-slate-600 font-bold pl-1">เกิดจากเชื่อมต่อ HTTPS แล้ว Certificate องค์กรไม่ได้รับการยืนยัน ให้รันยกเลิกตรวจสอบ SSL ชั่วคราว:</p>
+                    <div className="rounded-lg bg-[#0C0E1A] p-3 text-[10px] font-mono text-white flex items-center justify-between">
+                      <span>git config --global http.sslverify false</span>
+                      <button 
+                        onClick={() => copyGuideCommand("git config --global http.sslverify false", "err-2")}
+                        className="bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white p-1 rounded border border-white/10"
+                      >
+                        {copiedGuideText === "err-2" ? <Check className="h-3 w-3 text-emerald-450" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error 3 */}
+                  <div className="rounded-xl border border-red-200/50 bg-red-50/10 p-4 space-y-2.5">
+                    <h3 className="text-xs font-black text-red-755">3. Permission denied (publickey) via SSH</h3>
+                    <p className="text-[10.5px] text-slate-600 font-bold pl-1">เกิดจากการเชื่อมต่อ SSH ไม่มีกุญแจที่ถูกต้องบนเซิร์ฟเวอร์ GitLab:</p>
+                    <ul className="list-disc pl-5 text-[10px] text-slate-600 font-bold space-y-1">
+                      <li>ตรวจสอบว่าพิมพ์สร้างคีย์ ed25519 หรือยัง</li>
+                      <li>ตรวจสอบว่า Copy คีย์สาธารณะ `.pub` ไปบันทึกหน้าเว็บ GitLab SSH Keys แล้ว</li>
+                      <li>รันคำสั่ง `ssh -T git@seagit.okla.seagate.com` เพื่อเช็คความคืบหน้าทดสอบ</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. QUICK STARTS */}
+            {selectedGuidePhase === "quickstart" && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-300/10 pb-2">
+                  <h2 className="text-sm font-black text-indigo-900">🚀 QUICK START (ชุดรันด่วนรวดเดียวจบ)</h2>
+                  <p className="text-[10px] text-slate-500 font-medium">สำหรับผู้ที่เข้าใจขั้นตอนแล้ว สามารถก๊อปปี้บล็อกชุดคำสั่งรวดเดียวไปปรับเปลี่ยน URL เพื่อรันได้ทันที</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* SSH Quick start */}
+                  <div className="rounded-xl border border-indigo-200/50 bg-indigo-50/10 p-4 space-y-3 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-xs font-black text-indigo-755 flex items-center gap-1">⭐ ชุดคำสั่งยิงยาว (SSH Mode)</h3>
+                      <p className="text-[9.5px] text-slate-500 font-bold mt-1">คัดลอกรันเรียงแถวในโฟลเดอร์สำหรับ SSH:</p>
+                      <pre className="text-[9.5px] font-mono bg-[#0C0E1A] text-slate-300 p-2.5 rounded border border-white/5 mt-2 text-left leading-relaxed">
+{`git init
+git remote add origin git@seagit.okla.seagate.com:web-gallery/webgdoc.git
+git pull origin main --allow-unrelated-histories
+git add .
+git commit -m "init"
+git branch -M main
+git push -u origin main`}
+                      </pre>
+                    </div>
+                    <button
+                      onClick={() => copyGuideCommand(`git init\ngit remote add origin git@seagit.okla.seagate.com:web-gallery/webgdoc.git\ngit pull origin main --allow-unrelated-histories\ngit add .\ngit commit -m "init"\ngit branch -M main\ngit push -u origin main`, "quick-ssh")}
+                      className="w-full text-center bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2 text-[10px] font-bold transition active:scale-97 cursor-pointer mt-1"
+                    >
+                      {copiedGuideText === "quick-ssh" ? "✓ คัดลอกสำเร็จ!" : "📋 คัดลอกชุดคำสั่ง SSH ทั้งหมด"}
+                    </button>
+                  </div>
+
+                  {/* HTTPS Quick start */}
+                  <div className="rounded-xl border border-indigo-200/50 bg-indigo-50/10 p-4 space-y-3 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-xs font-black text-indigo-755 flex items-center gap-1">ชุดคำสั่งยิงยาว (HTTPS Mode)</h3>
+                      <p className="text-[9.5px] text-slate-500 font-bold mt-1">คัดลอกรันเรียงแถวในโฟลเดอร์สำหรับ HTTPS:</p>
+                      <pre className="text-[9.5px] font-mono bg-[#0C0E1A] text-slate-300 p-2.5 rounded border border-white/5 mt-2 text-left leading-relaxed">
+{`git init
+git remote add origin https://seagit.okla.seagate.com/web-gallery/webgdoc.git
+git config --global credential.helper manager
+git pull origin main --allow-unrelated-histories
+git add .
+git commit -m "init"
+git branch -M main
+git push -u origin main`}
+                      </pre>
+                    </div>
+                    <button
+                      onClick={() => copyGuideCommand(`git init\ngit remote add origin https://seagit.okla.seagate.com/web-gallery/webgdoc.git\ngit config --global credential.helper manager\ngit pull origin main --allow-unrelated-histories\ngit add .\ngit commit -m "init"\ngit branch -M main\ngit push -u origin main`, "quick-https")}
+                      className="w-full text-center bg-slate-900 hover:bg-slate-800 text-white rounded-lg py-2 text-[10px] font-bold transition active:scale-97 cursor-pointer mt-1"
+                    >
+                      {copiedGuideText === "quick-https" ? "✓ คัดลอกสำเร็จ!" : "📋 คัดลอกชุดคำสั่ง HTTPS ทั้งหมด"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </main>
 
         </div>
-
-        {/* Right Side: Terminal Console Mockup */}
-        <div className="w-full lg:w-[420px] rounded-xl bg-[#090A14] p-4 text-white text-[11px] border border-white/5 shadow-2xl relative flex-shrink-0 h-[240px] lg:h-auto flex flex-col justify-between overflow-hidden">
-          <div className="flex items-center justify-between pb-2 border-b border-white/5 mb-2 text-slate-500 font-mono text-[8px] select-none flex-shrink-0">
-            <div className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#ff5f57]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-[#ffbd2e]" />
-              <span className="h-1.5 w-1.5 rounded-full bg-[#28c840]" />
-              <span className="ml-1 font-semibold text-slate-500">terminal-console-output</span>
-            </div>
-            <Terminal className="h-3.5 w-3.5 text-slate-500" />
-          </div>
-
-          <div className="flex-1 overflow-y-auto no-scrollbar pb-1">
-            <HighlightedCommand 
-              commandText={selectedCommand.command(params)} 
-              outputText={selectedCommand.successOutput ? selectedCommand.successOutput(params, animationStep) : ""}
-              showOutput={isAnimating && animationStep >= (selectedCommand.id === "status" || selectedCommand.id === "diff" || selectedCommand.id === "branch_list" ? 0 : 2)}
-            />
-          </div>
-
-          <div className="flex-shrink-0 pt-2 border-t border-white/5 flex items-center justify-between text-[8.5px] text-slate-500 font-mono select-none">
-            <span>Lines: {selectedCommand.command(params).split("\n").length}</span>
-            <button
-              onClick={copyToClipboard}
-              className="bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white px-2 py-1 rounded border border-white/10 transition cursor-pointer flex items-center gap-1"
-              title="คัดลอกคำสั่ง"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3 w-3 text-emerald-450" /> คัดลอกแล้ว
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" /> คัดลอกโค้ด
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-      </div>
+      )}
 
     </div>
   );
@@ -792,7 +1183,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
         >
           <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-fuchsia-500 flex items-center justify-center font-black text-xl shadow-lg border-2 border-white/35 relative">
             {params.name ? params.name.charAt(0) : "U"}
-            <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-400 border-2 border-slate-950 indicator-pulse" />
+            <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-400 border-2 border-slate-955 indicator-pulse" />
           </div>
           <div className="text-center min-w-0 w-full space-y-0.5">
             <div className="text-[11px] font-extrabold truncate text-white">{params.name || "Username"}</div>
@@ -807,7 +1198,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
               initial={{ left: 0 }}
               animate={{ left: "100%" }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute h-2.5 w-2.5 rounded-full bg-indigo-405 -top-[4px] shadow-[0_0_8px_rgb(99,102,241)]"
+              className="absolute h-2.5 w-2.5 rounded-full bg-indigo-400 -top-[4px] shadow-[0_0_8px_rgb(99,102,241)]"
             />
           )}
         </div>
@@ -822,7 +1213,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
             <FileCode className="h-3 w-3" /> ~/.gitconfig
           </div>
           <div className="space-y-0.5 text-slate-350">
-            <div className="text-slate-500 font-bold">[user]</div>
+            <div className="text-slate-505 font-bold">[user]</div>
             <div className="flex gap-1.5 pl-3 items-center min-h-[1.2rem]">
               <span className="text-slate-555">name =</span>
               {isPlaying && step > 1 ? (
@@ -876,7 +1267,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
       <div className="flex-1 flex flex-col justify-center items-center gap-3 text-white min-h-0">
         <Laptop className="h-10 w-10 text-slate-355" />
         <div className="rounded-lg bg-[#0C0E1A] p-3.5 w-[240px] font-mono text-[9px] text-left border border-white/10 shadow-lg space-y-1.5">
-          <div className="text-slate-500 font-bold select-none">$ git status</div>
+          <div className="text-slate-550 font-bold select-none">$ git status</div>
           {isPlaying && step > 1 ? (
             <div className="leading-relaxed">
               On branch <span className="text-indigo-400 font-bold">main</span><br />
@@ -922,7 +1313,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 animate={{ scale: 1, opacity: 1 }}
                 className="absolute -top-3 -right-3 rounded-lg border border-indigo-455 bg-slate-900 px-2 py-1 shadow-2xl flex items-center gap-1.5 text-[8.5px] font-mono text-indigo-300"
               >
-                <FolderGit2 className="h-3.5 w-3.5 text-indigo-400" /> .git/
+                <FolderGit2 className="h-3.5 w-3.5 text-indigo-405" /> .git/
               </motion.div>
             )}
           </AnimatePresence>
@@ -1136,7 +1527,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
 
         {/* Staging Area Box */}
         <div className="rounded-xl border-2 border-indigo-500/35 bg-indigo-500/5 p-3 w-[125px] h-[155px] flex flex-col items-center justify-between shadow-inner relative">
-          <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Staging Area</div>
+          <div className="text-[9px] font-bold text-indigo-405 uppercase tracking-widest">Staging Area</div>
           
           <AnimatePresence>
             {isPlaying && step > 0 && (
@@ -1279,7 +1670,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
     return (
       <div className="flex-1 flex items-center justify-center relative text-white min-h-0">
         <div className="rounded-xl border border-white/10 bg-white/5 p-4 w-[160px] h-[110px] flex flex-col items-center justify-center relative shadow-lg">
-          <FileCode className="h-8 w-8 text-indigo-400" />
+          <FileCode className="h-8 w-8 text-indigo-405" />
           <span className="text-[9.5px] font-mono font-bold text-slate-300 mt-2">{params.file || "index.html"}</span>
           
           <AnimatePresence>
@@ -1639,7 +2030,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
 
         {/* Stash Safe Box */}
         <div className="rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-3 w-[135px] h-[155px] flex flex-col items-center justify-between relative shadow-inner">
-          <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Git Stash Safe</div>
+          <div className="text-[9px] font-bold text-slate-505 uppercase tracking-widest">Git Stash Safe</div>
           
           <AnimatePresence>
             {isPlaying && step > 0 && step < 3 && (
@@ -1651,7 +2042,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 layoutId="stash-pack"
                 className="h-12 w-10 rounded-lg bg-slate-800 border border-slate-700 flex flex-col items-center justify-center text-slate-400 p-1 shadow-lg relative"
               >
-                <Database className="h-4 w-4 text-indigo-400 animate-pulse" />
+                <Database className="h-4 w-4 text-indigo-405 animate-pulse" />
                 <span className="text-[7.5px] font-mono mt-0.5 font-bold">stash@{`{0}`}</span>
                 <span className="absolute top-1.5 right-1.5 text-[7px]">🔒</span>
               </motion.div>
@@ -1805,4 +2196,147 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
       ไม่มีข้อมูลจำลอง
     </div>
   );
+}
+
+// 6. HELPER FUNCTION TO MAP DYNAMIC STEPS FOR THE INTERACTIVE GUIDE VIEW
+function getGuideStepsForPhase(phaseNum, authMethod) {
+  switch (phaseNum) {
+    case 1:
+      return [
+        {
+          title: "1. ตั้งค่าระบุชื่อตัวตนผู้พัฒนา (Git Username)",
+          desc: "ช่วยให้ผู้ร่วมทีมทราบว่าใครเป็นคนส่งไฟล์นี้ขึ้นระบบ GitLab",
+          command: 'git config --global user.name "Somchai Dev"',
+          tip: "พิมพ์ชื่อจริงของคุณแทน 'Somchai Dev' ในเครื่องคอมพิวเตอร์ตนเอง"
+        },
+        {
+          title: "2. ตั้งค่าระบุอีเมลผู้ติดต่อ (Git User Email)",
+          desc: "เชื่อมบัญชีประวัติของคอมมิตเข้าสู่โปรไฟล์ภาพบนระบบ GitLab Cloud",
+          command: 'git config --global user.email "somchai.d@seagate.com"',
+          tip: "ใช้อีเมลบริษัทหรือองค์กรที่ผูกกับ GitLab เสมอ"
+        },
+        {
+          title: "3. ตรวจสอบข้อมูลความเรียบร้อยของ Git Config",
+          desc: "พิมพ์รันคำสั่งเช็คลิสต์ว่าข้อมูลตัวตนเราได้รับการจัดเก็บลงระบบเรียบร้อย",
+          command: 'git config --global --list',
+          tip: "มองหารายการ user.name และ user.email ในลิสต์ที่แสดง"
+        }
+      ];
+    case 2:
+      if (authMethod === "ssh") {
+        return [
+          {
+            title: "1. สร้างรหัสคู่กุญแจความปลอดภัย SSH (Ed25519 Keypair)",
+            desc: "สร้างรหัสลับเฉพาะเครื่องคอมพิวเตอร์ของคุณเพื่อการแลกเปลี่ยนข้อมูลอย่างปลอดภัยโดยไม่ต้องใช้รหัสผ่าน",
+            command: 'ssh-keygen -t ed25519 -C "somchai.d@seagate.com"',
+            tip: "กด Enter ไปเรื่อย ๆ 3 ครั้งเพื่อเซฟลงตำแหน่งดีฟอลต์ (ข้ามการตั้ง passphrase)"
+          },
+          {
+            title: "2. แสดงรหัสและ Copy คีย์เพื่อนำไปยืนยันตัวตน",
+            desc: "เปิดอ่านเนื้อหากุญแจสาธารณะ (Public Key) ที่เครื่องผลิตเสร็จสิ้น",
+            command: 'cat ~/.ssh/id_ed25519.pub',
+            tip: "ลากคลุม Copy ข้อความทั้งหมดที่ขึ้นต้นด้วย ssh-ed25519"
+          },
+          {
+            title: "3. เพิ่มคีย์ลงในโปรไฟล์ GitLab บนเว็บไซค์",
+            desc: "นำคีย์สาธารณะที่คัดลอก ไปสลักไว้บน GitLab ของบัญชีตนเอง",
+            tip: "ไปที่ GitLab.com → คลิกรูปโปรไฟล์มุมขวาบน → Settings → SSH Keys → กด 'Add new key' นำเนื้อหามาวางในกล่องข้อความแล้วเซฟ"
+          },
+          {
+            title: "4. ทดสอบความถูกต้องในการเชื่อมโยง SSH key",
+            desc: "ทดสอบการเคาะสัญญานไปที่ GitLab Server ว่าจำคีย์ของเราได้สำเร็จหรือไม่",
+            command: 'ssh -T git@seagit.okla.seagate.com',
+            tip: "หากสำเร็จจะตอบกลับว่า: 'Welcome to GitLab, @username!'"
+          }
+        ];
+      } else {
+        return [
+          {
+            title: "1. ตั้งค่าช่วยเหลือจำชื่อบัญชีรหัสผ่าน (HTTPS Credential Helper)",
+            desc: "สั่งให้ระบบ Windows Credentials Manager บันทึกข้อมูลรหัสผ่านของเรา เพื่อไม่ต้องพิมพ์ใหม่ทุกครั้งที่อัปเดตไฟล์",
+            command: 'git config --global credential.helper manager',
+            tip: "หลังจากนี้เมื่อรันคำสั่ง push ครั้งแรก จะมีหน้าต่างป๊อปอัปให้ล็อกอินเพียงครั้งเดียว"
+          }
+        ];
+      }
+    case 3:
+      return [
+        {
+          title: "1. สลับไปยังโฟลเดอร์โปรเจกต์งานในเครื่องของคุณ",
+          desc: "เปิดหน้าต่าง Terminal หรือ Command Prompt ย้ายพาธไปยังจุดโปรเจกต์เป้าหมาย",
+          command: 'cd C:/projects/my-web-app',
+          tip: "พิมพ์พาธให้ตรงตามตำแหน่งโฟลเดอร์งานของเครื่องคุณจริง"
+        },
+        {
+          title: "2. เริ่มต้นระบบประวัติความก้าวหน้าโครงการ (Init repository)",
+          desc: "สร้างฐานข้อมูลว่างเปล่าซ่อนไว้ภายใต้โฟลเดอร์งานเพื่อคอยดักฟังการเปลี่ยนแปลง",
+          command: 'git init',
+          tip: "สร้างไฟล์ระบบ .git/ ขึ้นสำเร็จในเครื่องโดยอัตโนมัติ"
+        }
+      ];
+    case 4:
+      return [
+        {
+          title: authMethod === "ssh" ? "1. ผูกปลายทางต้นแบบผ่าน SSH (Recommended)" : "1. ผูกปลายทางต้นแบบผ่าน HTTPS",
+          desc: "เชื่อมโยงโฟลเดอร์ในเครื่องปัจจุบัน เข้ากับ GitLab repository เสมือนบนคลาวด์ปลายทาง โดยใช้ชื่อตัวแทนว่า origin",
+          command: authMethod === "ssh" 
+            ? 'git remote add origin git@seagit.okla.seagate.com:web-gallery/webgdoc.git'
+            : 'git remote add origin https://seagit.okla.seagate.com/web-gallery/webgdoc.git',
+          tip: "เปลี่ยน URL ด้านบนให้ตรงตาม GitLab Repo ปลายทางที่คุณสร้างไว้"
+        }
+      ];
+    case 5:
+      return [
+        {
+          title: "1. ดึงประวัติไฟล์แรกเริ่มจากระบบ GitLab ลงมาสมาน (README)",
+          desc: "ดึงข้อมูล README.md จาก GitLab คลาวด์มาหลอมรวมก่อนเพื่อป้องกันประวัติงานชนกระแทกกัน",
+          command: 'git pull origin main --allow-unrelated-histories',
+          tip: "ธง --allow-unrelated-histories จำเป็นมากในการเชื่อมรวมระบบครั้งแรกที่ประวัติยังไม่ต่อเชื่อมกัน"
+        }
+      ];
+    case 6:
+      return [
+        {
+          title: "1. จัดคิวระบุไฟล์ทั้งหมดเข้าด่านสเตจ (Stage changes)",
+          desc: "จับไฟล์แก้ไขล่าสุดในเครื่องแพ็คส่งเข้าด่านเตรียมจดจารึกเวอร์ชัน",
+          command: 'git add .',
+          tip: "เครื่องหมาย . หมายถึงการนำทุกโฟลเดอร์และไฟล์เข้าคิว Staged"
+        },
+        {
+          title: "2. พิมพ์คอมมิตบันทึกประวัติหลักการเริ่มต้นงาน",
+          desc: "จารึกความเปลี่ยนแปลงพร้อมพิมพ์ข้อความเพื่อเป็นป้ายกำกับประวัติเวอร์ชันแรก",
+          command: 'git commit -m "initial commit"',
+          tip: "ข้อความ initial commit บ่งบอกถึงการนำเข้าโค้ดตั้งต้นอย่างเป็นทางการ"
+        },
+        {
+          title: "3. ตั้งชื่อกิ่งการทำงานหลักเป็น main",
+          desc: "เปลี่ยนชื่อกิ่งหลักดั้งเดิม (ที่อาจชื่อ master) ให้กลายเป็น main เพื่อให้สอดคล้องกับโครงสร้างมาตรฐาน GitLab",
+          command: 'git branch -M main',
+          tip: "อักษร -M เป็นคำสั่งบังคับย้ายและตั้งชื่อกิ่งหลักทันที"
+        },
+        {
+          title: "4. ทำการดันโค้ดขึ้นสู่เซิร์ฟเวอร์ปลายทางพร้อมผูกสายส่ง (-u flag)",
+          desc: "อัปโหลดกลุ่มงานทั้งหมดในเครื่องขึ้น GitLab Server และสั่งจดจำสายท่อนำส่งในอนาคต",
+          command: 'git push -u origin main',
+          tip: "ธง -u เพื่อระบุให้เครื่องลูกข่ายผูกกิ่ง main ของเราเข้าสู่ origin/main เป็นค่าเริ่มต้น"
+        }
+      ];
+    case 7:
+      return [
+        {
+          title: "1. นำส่งงานอัปเดตใหม่ ๆ ในวันถัดไปอย่างรวดเร็ว (Daily Push)",
+          desc: "หลังจากผูกสายส่งใน Phase 6 แล้ว เมื่อต้องการแก้ไขเพิ่มเติมและอัปเดต สามารถรันตามขั้นตอน 3 คำสั่งรวดเร็วดังนี้:",
+          command: 'git add .\ngit commit -m "update code"\ngit push',
+          tip: "ไม่ต้องใส่ -u origin main ในคำสั่ง push อีกต่อไปแล้ว"
+        },
+        {
+          title: "2. ดึงอัปเดตงานของเพื่อนลงมาสมาน (Daily Pull)",
+          desc: "ก่อนเริ่มต้นพิมพ์โค้ดในเช้าวันใหม่ ควรทำการดึงประวัติไฟล์ล่าสุดของทีมลงมาทับเพื่อความอัปเดต",
+          command: 'git pull',
+          tip: "ช่วยหลีกเลี่ยงโอกาสเกิดข้อขัดแย้งของไฟล์ (Merge Conflict) ได้เป็นอย่างดี"
+        }
+      ];
+    default:
+      return [];
+  }
 }

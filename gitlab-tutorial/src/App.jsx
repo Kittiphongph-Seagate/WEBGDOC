@@ -488,7 +488,7 @@ function GitBranchGraphVisualizer() {
   }, [consoleLogs]);
 
   const getTrackColor = (trackIndex) => {
-    const colors = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#EC4899", "#8B5CF6"];
+    const colors = ["#4F46E5", "#059669", "#D97706", "#DC2626", "#EC4899", "#7C3AED"];
     return colors[trackIndex % colors.length];
   };
 
@@ -866,6 +866,15 @@ function GitBranchGraphVisualizer() {
     }
   };
 
+  const getPath = (p, c) => {
+    if (p.y === c.y) {
+      return `M ${p.x} ${p.y} L ${c.x} ${c.y}`;
+    } else {
+      const midX = (p.x + c.x) / 2;
+      return `M ${p.x} ${p.y} C ${midX} ${p.y}, ${midX} ${c.y}, ${c.x} ${c.y}`;
+    }
+  };
+
   const maxX = Math.max(...commits.map(c => c.x), 400);
 
   return (
@@ -877,7 +886,7 @@ function GitBranchGraphVisualizer() {
         </div>
 
         {/* Current branch status */}
-        <div className="bg-slate-900/10 rounded-lg p-2.5 border border-white/40 flex items-center justify-between">
+        <div className="bg-slate-900/5 rounded-lg p-2.5 border border-slate-200/50 flex items-center justify-between">
           <div className="text-[9.5px] font-extrabold text-slate-700">Active Branch:</div>
           <span className="bg-emerald-500 text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded shadow">
             ★ {currentBranch}
@@ -885,48 +894,48 @@ function GitBranchGraphVisualizer() {
         </div>
 
         {/* Action: Commit */}
-        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+        <div className="space-y-1.5 bg-white/50 rounded-lg p-3 border border-slate-200/60 shadow-sm">
           <div className="text-[9.5px] font-extrabold text-slate-800">1. บันทึกคอมมิตประวัติงาน (Commit)</div>
           <input
             type="text"
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
-            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded px-2 py-1 text-[9.5px] font-mono focus:outline-none focus:border-indigo-500"
             placeholder="Commit message..."
           />
           <button
             onClick={() => doCommit(commitMessage)}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             git commit -m "{commitMessage.substring(0, 15)}..."
           </button>
         </div>
 
         {/* Action: Create Branch */}
-        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+        <div className="space-y-1.5 bg-white/50 rounded-lg p-3 border border-slate-200/60 shadow-sm">
           <div className="text-[9.5px] font-extrabold text-slate-800">2. แตกสาขากิ่งทำงานใหม่ (Create Branch)</div>
           <input
             type="text"
             value={newBranchName}
             onChange={(e) => setNewBranchName(e.target.value)}
-            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded px-2 py-1 text-[9.5px] font-mono focus:outline-none focus:border-indigo-500"
             placeholder="Branch name..."
           />
           <button
             onClick={() => doCreateBranch(newBranchName)}
-            className="w-full bg-sky-600 hover:bg-sky-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-sky-600 hover:bg-sky-700 text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             git branch {newBranchName}
           </button>
         </div>
 
         {/* Action: Switch Branch */}
-        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+        <div className="space-y-1.5 bg-white/50 rounded-lg p-3 border border-slate-200/60 shadow-sm">
           <div className="text-[9.5px] font-extrabold text-slate-800">3. สลับสาขากิ่งที่เลือก (Checkout)</div>
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded px-2 py-1 text-[9.5px] font-mono focus:outline-none focus:border-indigo-500"
           >
             <option value="">-- เลือกกิ่งสาขา --</option>
             {Object.keys(branches).map(b => (
@@ -936,19 +945,19 @@ function GitBranchGraphVisualizer() {
           <button
             onClick={() => doCheckout(selectedBranch)}
             disabled={!selectedBranch}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-350 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             git checkout {selectedBranch || "..."}
           </button>
         </div>
 
         {/* Action: Merge */}
-        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+        <div className="space-y-1.5 bg-white/50 rounded-lg p-3 border border-slate-200/60 shadow-sm">
           <div className="text-[9.5px] font-extrabold text-slate-800">4. รวมงานจากกิ่งอื่นเข้าสู่กิ่งหลัก (Merge)</div>
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded px-2 py-1 text-[9.5px] font-mono focus:outline-none focus:border-indigo-500"
           >
             <option value="">-- เลือกกิ่งสาขา --</option>
             {Object.keys(branches).map(b => (
@@ -958,19 +967,19 @@ function GitBranchGraphVisualizer() {
           <button
             onClick={() => doMerge(selectedBranch)}
             disabled={!selectedBranch || selectedBranch === currentBranch}
-            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-350 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             git merge {selectedBranch || "..."}
           </button>
         </div>
 
         {/* Action: Rebase */}
-        <div className="space-y-1.5 bg-white/40 rounded-lg p-3 border border-slate-200/50 shadow-sm">
+        <div className="space-y-1.5 bg-white/50 rounded-lg p-3 border border-slate-200/60 shadow-sm">
           <div className="text-[9.5px] font-extrabold text-slate-800">5. ย้ายฐานประวัติต่อยอดกิ่ง (Rebase)</div>
           <select
             value={selectedBranch}
             onChange={(e) => setSelectedBranch(e.target.value)}
-            className="w-full bg-white/75 border border-slate-200 rounded px-2 py-1 text-[9px] font-mono focus:outline-none focus:border-indigo-500"
+            className="w-full bg-white border border-slate-200 text-slate-800 rounded px-2 py-1 text-[9.5px] font-mono focus:outline-none focus:border-indigo-500"
           >
             <option value="">-- เลือกกิ่งสาขา --</option>
             {Object.keys(branches).map(b => (
@@ -980,7 +989,7 @@ function GitBranchGraphVisualizer() {
           <button
             onClick={() => doRebase(selectedBranch)}
             disabled={!selectedBranch || selectedBranch === currentBranch}
-            className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5"
+            className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-slate-350 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-mono font-bold text-[9.5px] py-1.5 rounded transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             git rebase {selectedBranch || "..."}
           </button>
@@ -989,7 +998,7 @@ function GitBranchGraphVisualizer() {
         {/* Reset button */}
         <button
           onClick={doResetHard}
-          className="mt-auto w-full bg-rose-600 hover:bg-rose-700 text-white font-mono font-bold text-[9.5px] py-2 rounded transition shadow-lg flex items-center justify-center gap-1.5"
+          className="mt-auto w-full bg-rose-600 hover:bg-rose-700 text-white font-mono font-bold text-[9.5px] py-2 rounded transition shadow-lg flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <RotateCcw className="h-3.5 w-3.5" /> ล้างหน้าจอจำลอง (Reset)
         </button>
@@ -1005,20 +1014,28 @@ function GitBranchGraphVisualizer() {
               <GitBranch className="h-4.5 w-4.5 text-indigo-600" />
               <span className="text-xs font-mono font-black text-slate-800">Git History Graph</span>
             </div>
-            <div className="text-[8.5px] font-mono text-indigo-400 bg-indigo-950/60 px-2.5 py-1 rounded border border-indigo-800/30">
+            <div className="text-[8.5px] font-mono text-indigo-650 bg-indigo-100/70 px-2.5 py-1 rounded border border-indigo-200/50 font-black">
               Interactive sandbox
             </div>
           </div>
 
-          {/* SVG Scrollable Wrapper */}
-          <div className="flex-1 overflow-x-auto overflow-y-hidden my-4 rounded-xl border border-slate-200/50 bg-slate-950/70 p-4 min-h-[240px] flex items-center">
-            <svg width={maxX + 120} height="280" className="mx-auto">
+          {/* SVG Scrollable Wrapper with LIGHT grid background */}
+          <div className="flex-1 overflow-x-auto overflow-y-hidden my-4 rounded-xl border border-slate-200/75 bg-slate-50/50 p-4 min-h-[240px] flex items-center relative">
+            <svg width={maxX + 120} height="280" className="mx-auto relative z-10">
               <defs>
+                {/* Dotted Grid Pattern */}
+                <pattern id="dot-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <circle cx="2" cy="2" r="1" fill="rgba(148, 163, 184, 0.15)" />
+                </pattern>
+                {/* Glow filter */}
                 <filter id="glow-indigo" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feGaussianBlur stdDeviation="2" result="blur" />
                   <feComposite in="SourceGraphic" in2="blur" operator="over" />
                 </filter>
               </defs>
+
+              {/* Grid Background */}
+              <rect width="100%" height="100%" fill="url(#dot-grid)" />
 
               {/* Connecting Lines */}
               {commits.map((c) => {
@@ -1070,9 +1087,9 @@ function GitBranchGraphVisualizer() {
                       cy={c.y}
                       r={isCurrentBranchHead ? 11.5 : 8.5}
                       fill={color}
-                      stroke="#0F172A"
+                      stroke="#FFFFFF"
                       strokeWidth="2.5"
-                      className="cursor-pointer transition hover:scale-110"
+                      className="cursor-pointer transition hover:scale-110 shadow-sm"
                       opacity={c.orphaned ? 0.3 : 1}
                       title={`Commit: ${c.hash.substring(0, 7)}\nMessage: ${c.message}\nBranch: ${c.branch}`}
                     />
@@ -1083,7 +1100,7 @@ function GitBranchGraphVisualizer() {
                       y={c.y + 3.5}
                       textAnchor="middle"
                       fill="#FFF"
-                      fontSize="7"
+                      fontSize="7.5"
                       fontFamily="monospace"
                       fontWeight="bold"
                       className="pointer-events-none select-none"
@@ -1095,14 +1112,14 @@ function GitBranchGraphVisualizer() {
                     {/* Commit Hash underneath */}
                     <text
                       x={c.x}
-                      y={c.y + 22}
+                      y={c.y + 24}
                       textAnchor="middle"
-                      fill="#94A3B8"
-                      fontSize="7"
+                      fill="#475569"
+                      fontSize="7.5"
                       fontFamily="monospace"
                       fontWeight="bold"
                       className="pointer-events-none select-none"
-                      opacity={c.orphaned ? 0.3 : 0.8}
+                      opacity={c.orphaned ? 0.3 : 0.9}
                     >
                       {c.hash.substring(0, 7)}
                     </text>
@@ -1119,10 +1136,10 @@ function GitBranchGraphVisualizer() {
                             width="56"
                             height="12"
                             rx="2"
-                            fill={isCurrent ? "#10B981" : "#334155"}
-                            stroke={isCurrent ? "#34C759" : "#475569"}
+                            fill={isCurrent ? "#10B981" : "#475569"}
+                            stroke={isCurrent ? "#34C759" : "#64748B"}
                             strokeWidth="1.2"
-                            className="shadow"
+                            className="shadow-sm"
                           />
                           {/* Label Text */}
                           <text
@@ -1144,7 +1161,7 @@ function GitBranchGraphVisualizer() {
                     {/* Show HEAD badge directly if detached head is pointing here */}
                     {!branches[currentBranch] && currentBranch === c.id && (
                       <g transform={`translate(${c.x}, ${c.y - 18})`}>
-                        <rect x="-28" y="-6.5" width="56" height="12" rx="2" fill="#EF4444" stroke="#F87171" strokeWidth="1.2" className="shadow" />
+                        <rect x="-28" y="-6.5" width="56" height="12" rx="2" fill="#EF4444" stroke="#F87171" strokeWidth="1.2" className="shadow-sm" />
                         <text x="0" y="2" textAnchor="middle" fill="#FFF" fontSize="6.5" fontFamily="sans-serif" fontWeight="extrabold" className="pointer-events-none select-none">
                           ★ HEAD (det)
                         </text>
@@ -1157,27 +1174,27 @@ function GitBranchGraphVisualizer() {
           </div>
 
           <div className="text-[10px] text-slate-500 font-bold leading-normal select-none">
-            💡 **คำแนะนำ:** คลิกปุ่มฝั่งซ้ายเพื่อทำคอมมิต แตกกิ่ง สลับกิ่ง และทดสอบ Merge หรือ Rebase แบบสดๆ ได้ทันที!
+            💡 **คำแนะนำ:** คลิกปุ่มฝั่งซ้ายหรือพิมพ์คำสั่งตรงช่อง Console Terminal ด้านล่างเพื่อเริ่มแซนด์บ็อกซ์ได้ตามต้องการ!
           </div>
         </div>
 
         {/* Terminal Log Console */}
-        <div className="h-[210px] rounded-xl border border-slate-900 bg-[#090A14] p-4 flex flex-col shadow-2xl flex-shrink-0 overflow-hidden relative">
-          <div className="text-indigo-400 font-mono font-bold text-[10px] border-b border-white/5 pb-2 mb-2 flex items-center justify-between select-none">
-            <span className="flex items-center gap-1.5"><Terminal className="h-4 w-4" /> Git Console Terminal Prompt</span>
-            <span className="text-[8px] text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-900/30">Active Shell</span>
+        <div className="h-[210px] rounded-xl border border-slate-200 bg-slate-900 p-4 flex flex-col shadow-lg flex-shrink-0 overflow-hidden relative">
+          <div className="text-slate-350 font-mono font-bold text-[10px] border-b border-white/5 pb-2 mb-2 flex items-center justify-between select-none">
+            <span className="flex items-center gap-1.5"><Terminal className="h-4 w-4 text-emerald-400" /> Git Console Terminal Prompt</span>
+            <span className="text-[8px] text-emerald-450 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-900/30">Active Shell</span>
           </div>
 
           {/* Logs scroll area */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto font-mono text-[10.5px] text-slate-355 space-y-1 pr-1.5 leading-relaxed text-left select-text">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto font-mono text-[10.5px] text-slate-200 space-y-1 pr-1.5 leading-relaxed text-left select-text">
             {consoleLogs.map((log, idx) => {
               let color = "text-slate-300";
               if (log.startsWith("$")) {
                 color = "text-emerald-400 font-bold";
               } else if (log.includes("WIP") || log.includes("First,")) {
-                color = "text-indigo-350";
+                color = "text-indigo-300";
               } else if (log.includes("commit") || log.includes("Switched")) {
-                color = "text-sky-400";
+                color = "text-sky-350";
               } else if (log.includes("fatal:") || log.includes("error:")) {
                 color = "text-rose-400 font-semibold";
               }
@@ -1196,7 +1213,7 @@ function GitBranchGraphVisualizer() {
               type="text"
               value={terminalInput}
               onChange={(e) => setTerminalInput(e.target.value)}
-              className="flex-1 bg-transparent text-emerald-300 font-mono text-[10.5px] focus:outline-none placeholder-slate-700 font-bold"
+              className="flex-1 bg-transparent text-emerald-300 font-mono text-[10.5px] focus:outline-none placeholder-slate-650 font-bold"
               placeholder="พิมพ์คำสั่ง เช่น git commit -m 'feat: login' หรือ git checkout -b feature"
               autoFocus
             />

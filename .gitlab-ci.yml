@@ -1,0 +1,22 @@
+stages:
+  - release
+
+auto_tag:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  rules:
+    # ป้องกันไม่ให้ job รันซ้ำตอน pipeline ที่เกิดจาก tag
+    - if: '$CI_COMMIT_TAG'
+      when: never
+
+    # ให้รันเฉพาะตอน push/merge เข้า default branch เช่น main
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+  script:
+    - echo "Creating auto tag..."
+
+  release:
+    tag_name: "v0.$CI_PIPELINE_IID"
+    name: "Release v0.$CI_PIPELINE_IID"
+    description: "Auto release from commit $CI_COMMIT_SHA"
+    ref: "$CI_COMMIT_SHA"

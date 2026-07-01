@@ -1,4 +1,4 @@
-name: Auto Tag Creation
+name: Auto Tag and Release Creation
 
 on:
   push:
@@ -6,15 +6,38 @@ on:
       - '**' # ทำงานเมื่อมีการ Push เข้าสู่ทุกกิ่ง (All Branches)
 
 permissions:
-  contents: write # ให้สิทธิ์เขียนข้อมูลเพื่อปักหมุดและ Push Tag กลับเข้าสู่ GitHub
+  contents: write # ให้สิทธิ์เขียนข้อมูลเพื่อปักหมุด Tag และสร้าง Release บน GitHub
 
 jobs:
-  create-tag:
+  verify-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './gitlab-tutorial/package-lock.json' # ชี้โฟลเดอร์สำหรับแคชเพื่อให้บิวต์เร็วขึ้น
+
+      # ========================================================
+      # เสาที่ 1: ตรวจสอบคุณภาพโค้ดและการสร้างบิลด์ (CI Verification)
+      # ========================================================
+      - name: Install Dependencies
+        run: |
+          cd gitlab-tutorial
+          npm ci
+
+      - name: Verify Build compiles
+        run: |
+          cd gitlab-tutorial
+          npm run build
+
+      # ========================================================
+      # ขั้นตอนสร้าง Git Tag และ ZIP แพ็คเกจโค้ด
+      # ========================================================
       - name: Setup Thailand Timezone
         run: sudo timedatectl set-timezone Asia/Bangkok
 
@@ -44,9 +67,19 @@ jobs:
           zip -r "release-${{ env.TAG_NAME }}.zip" . -x "*.git*" "*node_modules*"
           echo "✓ บีบอัดไฟล์ release-${{ env.TAG_NAME }}.zip สำเร็จ!"
 
-      - name: Upload ZIP to GitHub Actions Artifacts
-        uses: actions/upload-artifact@v4
+      # ========================================================
+      # เสาที่ 3: ระบบจัดเก็บบันทึกประวัติถาวร (GitHub Release Creation)
+      # ========================================================
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v2
         with:
-          name: release-${{ env.TAG_NAME }}
-          path: release-${{ env.TAG_NAME }}.zip
-          retention-days: 7 # จะลบออกเพื่อประหยัดพื้นที่คลาวด์ใน 7 วัน
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.TAG_NAME }}
+          body: |
+            ## 🚀 บันทึกการปล่อยเวอร์ชันอัตโนมัติ (Automated Version Release)
+            * **Release Tag:** `${{ env.TAG_NAME }}`
+            * **กิ่งหลักที่รัน (Branch):** `${{ github.ref_name }}`
+            * **รหัสอ้างอิง Commit:** `${{ github.sha }}`
+            
+            *ดาวน์โหลดไฟล์ซอร์สโค้ด ZIP ที่บีบอัดสะอาดยกเว้นไฟล์ระบบขยะได้จากหน้ารายการ Assets ด้านล่าง*
+          files: release-${{ env.TAG_NAME }}.zip

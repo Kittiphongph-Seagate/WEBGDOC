@@ -28,14 +28,14 @@ function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const CATEGORIES = [
-  "1. การตั้งค่า (Configuration)",
-  "2. เริ่มโปรเจกต์ (Starting a Project)",
-  "3. การทำงานประจำวัน (Day-to-Day)",
-  "4. สาขาการทำงาน (Branching)",
-  "5. รีโมทเซิร์ฟเวอร์ (Remote)",
-  "6. การเก็บงานชั่วคราว (Storing)",
-  "7. ป้ายกำกับ (Tagging)"
+const CATEGORIES_CONFIG = [
+  { name: "1. การตั้งค่า (Configuration)", icon: Settings, label: "Configuration" },
+  { name: "2. เริ่มโปรเจกต์ (Starting a Project)", icon: FolderGit2, label: "Starting Project" },
+  { name: "3. การทำงานประจำวัน (Day-to-Day)", icon: Laptop, label: "Day-to-Day" },
+  { name: "4. สาขาการทำงาน (Branching)", icon: GitBranch, label: "Branching" },
+  { name: "5. รีโมทเซิร์ฟเวอร์ (Remote)", icon: Server, label: "Remote" },
+  { name: "6. การเก็บงานชั่วคราว (Storing)", icon: Database, label: "Storing" },
+  { name: "7. ป้ายกำกับ (Tagging)", icon: Bookmark, label: "Tagging" }
 ];
 
 const COMMANDS = {
@@ -43,6 +43,7 @@ const COMMANDS = {
     id: "config",
     category: "1. การตั้งค่า (Configuration)",
     title: "git config (Identity)",
+    icon: Settings,
     subtitle: "กำหนดตัวตนผู้ใช้งานระบบ Git",
     command: (params) => `git config --global user.name "${params.name}"\ngit config --global user.email "${params.email}"`,
     description: "ขั้นตอนแรกของการระบุตัวตนในการบันทึกประวัติ (Commit) ในระบบ GitLab เพื่อแสดงรูปและอีเมลอย่างถูกต้องบนฐานข้อมูลประวัติ",
@@ -61,6 +62,7 @@ const COMMANDS = {
     id: "color_ui",
     category: "1. การตั้งค่า (Configuration)",
     title: "git config (Color UI)",
+    icon: Cpu,
     subtitle: "เปิดใช้สีข้อความใน Terminal คอนโซล",
     command: () => "git config --global color.ui auto",
     description: "ตั้งค่าแสดงผลสีสัน (Colorized terminal output) ให้กับข้อความตอบกลับของ Git CLI เพื่อช่วยให้อ่านข้อมูลประวัติและการรายงานผลลัพธ์ต่าง ๆ ได้ง่ายและชัดเจนขึ้น",
@@ -76,6 +78,7 @@ const COMMANDS = {
     id: "init",
     category: "2. เริ่มโปรเจกต์ (Starting a Project)",
     title: "git init",
+    icon: FolderGit2,
     subtitle: "สร้างคลังจัดเก็บประวัติเวอร์ชันในเครื่อง",
     command: (params) => `git init ${params.project}`,
     description: "สร้างฐานข้อมูลหรือโฟลเดอร์ระบบ Git ซ่อนอยู่ (.git) ในโปรเจกต์โฟลเดอร์ปัจจุบัน เพื่อเริ่มต้นระบบติดตามการแก้ไขประวัติงาน",
@@ -84,7 +87,7 @@ const COMMANDS = {
     ],
     explanation: [
       "สร้างโฟลเดอร์ระบบซ่อนชื่อ .git ขึ้นมาเพื่อจัดเก็บไฟล์ประวัติ",
-      "เป็นจุดเริ่มต้นในการทำงานของ Git บนเครื่องของตนเอง",
+      "เป็นจุดเริ่มต้นในการทำงาน of Git บนเครื่องของตนเอง",
       "เครื่องจะเตรียมกิ่งหลักเริ่มต้นขึ้นมารอใช้ในสถานะ Offline"
     ],
     successOutput: (params) => `Initialized empty Git repository in C:/projects/${params.project || "my-web-app"}/.git/\n# สร้างฐานข้อมูลติดตามประวัติเรียบร้อย!`
@@ -93,6 +96,7 @@ const COMMANDS = {
     id: "clone",
     category: "2. เริ่มโปรเจกต์ (Starting a Project)",
     title: "git clone",
+    icon: Laptop,
     subtitle: "ดาวน์โหลดโปรเจกต์ลงเครื่องของคุณ",
     command: (params) => `git clone ${params.url}`,
     description: "ดึงไฟล์โค้ด ประวัติเวอร์ชันย้อนหลังทั้งหมด และกิ่งก้าน (branches) จากคลาวด์มาสร้างเป็นโฟลเดอร์งานเริ่มต้นในเครื่องตนเอง",
@@ -110,6 +114,7 @@ const COMMANDS = {
     id: "status",
     category: "3. การทำงานประจำวัน (Day-to-Day)",
     title: "git status",
+    icon: Terminal,
     subtitle: "ตรวจสอบความเปลี่ยนแปลงในโฟลเดอร์งาน",
     command: () => `git status`,
     description: "ตรวจสอบความคืบหน้าปัจจุบัน เพื่อระบุว่ามีไฟล์ใดได้รับการเพิ่ม แก้ไข หรือไฟล์ใดอยู่ในสเตจพร้อมนำประวัติบันทึกเข้าสู่คอมมิต",
@@ -125,6 +130,7 @@ const COMMANDS = {
     id: "add",
     category: "3. การทำงานประจำวัน (Day-to-Day)",
     title: "git add",
+    icon: FolderOpen,
     subtitle: "เตรียมไฟล์เพื่อแพ็คพร้อมบันทึกประวัติ",
     command: (params) => `git add ${params.file}`,
     description: "จัดคิวการเปลี่ยนแปลงของไฟล์ ย้ายจากด่านแก้ไขในเครื่องเข้าสู่คิวเตรียมพร้อม (Staging Area) สำหรับส่งจัดจัดทำเวอร์ชันถัดไป",
@@ -142,6 +148,7 @@ const COMMANDS = {
     id: "diff",
     category: "3. การทำงานประจำวัน (Day-to-Day)",
     title: "git diff",
+    icon: FileCode,
     subtitle: "ดูการเปลี่ยนแปลงของไฟล์โค้ดแบบบรรทัด",
     command: () => "git diff",
     description: "ใช้ตรวจสอบและเปรียบเทียบโค้ดอย่างละเอียดว่ามีบรรทัดใดที่ถูกแก้ไข เพิ่มเติม หรือลบทิ้งไป ก่อนที่เราจะทำความสะอาดโค้ดเพื่อนำส่งเข้าด่านจัดเก็บ",
@@ -157,6 +164,7 @@ const COMMANDS = {
     id: "commit",
     category: "3. การทำงานประจำวัน (Day-to-Day)",
     title: "git commit",
+    icon: Code,
     subtitle: "จารึกประวัติและเหตุการณ์เวอร์ชันลงฮาร์ดดิสก์",
     command: (params) => `git commit -m "${params.message}"`,
     description: "การยืนยันประทับตราบันทึกเวอร์ชันเก็บเข้าฐานข้อมูลของตัวเครื่องเป็นหนึ่งเวอร์ชัน พร้อมจดข้อความกำกับอธิบายเหตุการณ์แก้ไข",
@@ -174,6 +182,7 @@ const COMMANDS = {
     id: "checkout_file",
     category: "3. การทำงานประจำวัน (Day-to-Day)",
     title: "git checkout --",
+    icon: RotateCcw,
     subtitle: "ลบล้างการแก้ไขไฟล์ ย้อนสู่คอมมิตล่าสุด",
     command: (params) => `git checkout -- ${params.file}`,
     description: "ยกเลิกการเปลี่ยนแปลงทั้งหมดในไฟล์ที่ระบุเพื่อดึงเนื้อหาต้นฉบับล่าสุดจากบันทึกคอมมิตกลับมาใช้งานแทน แก้ไขปัญหาเผลอเขียนบั๊กหรือเผลอแก้งานผิดพลาด",
@@ -191,6 +200,7 @@ const COMMANDS = {
     id: "branch_list",
     category: "4. สาขาการทำงาน (Branching)",
     title: "git branch",
+    icon: GitBranch,
     subtitle: "แสดงกิ่งสาขาทั้งหมดในเครื่องและเซิร์ฟเวอร์",
     command: () => "git branch -a",
     description: "แสดงกิ่งก้านสาขาการพัฒนา (Branches) ทั้งหมดที่มีอยู่ในโฟลเดอร์เครื่องเรา รวมถึงกิ่งจำลองปลายทางที่อยู่บนเซิร์ฟเวอร์ GitLab คลาวด์เพื่อการเชื่อมงาน",
@@ -206,6 +216,7 @@ const COMMANDS = {
     id: "checkout_branch",
     category: "4. สาขาการทำงาน (Branching)",
     title: "git checkout -b",
+    icon: GitBranch,
     subtitle: "แตกสาขาใหม่และสลับกิ่งทำงาน",
     command: (params) => `git checkout -b ${params.branch}`,
     description: "ใช้แยกกิ่งไปเขียนฟังก์ชันฟีเจอร์ย่อยต่าง ๆ อย่างเป็นอิสระ โดยไม่กระทบกิ่งหลักจนกว่าจะทำการตรวจสอบความเรียบร้อยของโค้ดเสร็จสิ้น",
@@ -223,6 +234,7 @@ const COMMANDS = {
     id: "merge",
     category: "4. สาขาการทำงาน (Branching)",
     title: "git merge",
+    icon: GitBranch,
     subtitle: "ผสานประวัติกิ่งย่อยเข้าสู่กิ่งหลัก",
     command: (params) => `git merge ${params.branch}`,
     description: "ดึงเอาประวัติการเปลี่ยนแปลงและการอัปเดตไฟล์ของกิ่งเป้าหมายที่เขียนเสร็จสมบูรณ์แล้ว มาหลอมผสานรวมเข้ากับกิ่งหลักปัจจุบันที่คุณสลับหัวทำงานค้างอยู่",
@@ -240,6 +252,7 @@ const COMMANDS = {
     id: "rebase",
     category: "4. สาขาการทำงาน (Branching)",
     title: "git rebase",
+    icon: ArrowRightLeft,
     subtitle: "ย้ายรากประวัติกิ่งไปต่อยอดที่ปลายสุด",
     command: (params) => `git rebase ${params.branch}`,
     description: "นำเอาคอมมิตของสาขากิ่งเราไปตัดต่อต่อยอดไว้ที่หัวบนสุดของกิ่งปลายทาง เพื่อไม่ให้เกิดประวัติกิ่งแยกซิกแซก ช่วยให้จัดระเบียบสายเวลาการเดินทางของโค้ดให้ตรงเป็นเส้นเดียว",
@@ -257,6 +270,7 @@ const COMMANDS = {
     id: "pull",
     category: "5. รีโมทเซิร์ฟเวอร์ (Remote)",
     title: "git pull",
+    icon: Server,
     subtitle: "ดึงโค้ดล่าสุดจากทีมรวมเข้ากับกิ่งเครื่องเรา",
     command: (params) => `git pull origin ${params.branch}`,
     description: "ดาวน์โหลดประวัติอัปเดตและไฟล์ล่าสุดที่มีทีมงานส่งขึ้นไปบน GitLab Server นำลงมาหลอมรวมเข้ากับกิ่งโค้ดที่เครื่องคอมพิวเตอร์ของคุณ",
@@ -274,6 +288,7 @@ const COMMANDS = {
     id: "push",
     category: "5. รีโมทเซิร์ฟเวอร์ (Remote)",
     title: "git push",
+    icon: Server,
     subtitle: "อัปโหลดกลุ่มประวัติขึ้นเซิร์ฟเวอร์ GitLab",
     command: (params) => `git push origin ${params.branch}`,
     description: "นำส่งกิ่งข้อมูล Commit ทั้งหมดในเครื่องที่เราทำไว้ ส่งผ่านอินเทอร์เน็ตขึ้นคลาวด์ไปเขียนรวมบน GitLab Server เพื่อความปลอดภัยและแชร์แบ่งงาน",
@@ -291,6 +306,7 @@ const COMMANDS = {
     id: "stash",
     category: "6. การเก็บงานชั่วคราว (Storing)",
     title: "git stash",
+    icon: Database,
     subtitle: "เก็บซ่อนโค้ดชั่วคราวโดยไม่ต้องพิมพ์ Commit",
     command: () => `git stash\n# ดึงโค้ดที่ซ่อนไว้กลับคืนมาทำงานต่อ:\ngit stash pop`,
     description: "ใช้รูดซิปเก็บงานที่แก้ค้างไว้เพื่อเปลี่ยนไปเขียนกิ่งอื่นชั่วคราว โดยไม่ต้อง Commit งานขยะเก็บไว้ เมื่อกลับมาทำงานเดิมสามารถดึงออกมาแก้ต่อได้ทันที",
@@ -314,6 +330,7 @@ const COMMANDS = {
     id: "tag_create",
     category: "7. ป้ายกำกับ (Tagging)",
     title: "git tag -a",
+    icon: Bookmark,
     subtitle: "สร้างป้ายกำกับเวอร์ชัน (Release Tag)",
     command: (params) => `git tag -a ${params.version} -m "${params.message}"`,
     description: "สร้างป้ายติดกำกับลงจุดบันทึกคอมมิตที่ต้องการ (เช่น เวอร์ชันเสร็จผลิตจริง v1.0.0) เพื่อระบุจุดไมล์สโตนที่สำคัญของความก้าวหน้าโปรเจกต์",
@@ -332,6 +349,7 @@ const COMMANDS = {
     id: "tag_push",
     category: "7. ป้ายกำกับ (Tagging)",
     title: "git push origin [tag]",
+    icon: Bookmark,
     subtitle: "ดันส่งป้ายกำกับเวอร์ชันขึ้นเซิร์ฟเวอร์ GitLab",
     command: (params) => `git push origin ${params.version}`,
     description: "ปกติคำสั่งดันโค้ด (git push) ทั่วไปจะไม่ดันป้ายเวอร์ชันไปหาคลาวด์ด้วย ต้องพิมพ์ระบุตัวป้ายเป้าหมายส่งไป เพื่อให้หน้าเว็บ GitLab แสดงแท็บ Releases ขึ้นอัปโหลดไฟล์",
@@ -543,54 +561,61 @@ export default function App() {
         </div>
       </motion.header>
 
-      {/* Category Horizontal Pill Tabs - Freeing Up Side Space */}
+      {/* Category Segmented Control Navigation - High End stripe feel */}
       <div className="relative z-10 overflow-x-auto no-scrollbar py-0.5 flex-shrink-0 flex gap-2">
-        <div className="flex gap-1.5 p-1 rounded-lg border border-white/25 bg-white/10 backdrop-blur-2xl w-max">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat;
+        <div className="flex gap-2 p-1.5 rounded-xl border border-slate-200/50 bg-white/40 backdrop-blur-2xl w-max shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+          {CATEGORIES_CONFIG.map((cat) => {
+            const isSelected = selectedCategory === cat.name;
+            const Icon = cat.icon;
             return (
               <button 
-                key={cat} 
-                onClick={() => handleCategorySelect(cat)} 
+                key={cat.name} 
+                onClick={() => handleCategorySelect(cat.name)} 
                 className={cn(
-                  "relative z-10 rounded-md px-3.5 py-2 text-[9.5px] font-black uppercase tracking-wider transition-colors duration-200 whitespace-nowrap cursor-pointer",
-                  isSelected ? "text-slate-950 font-extrabold" : "text-slate-500 hover:text-slate-800"
+                  "relative z-10 rounded-lg px-4 py-2.5 text-[9.5px] font-extrabold uppercase tracking-wider transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-2 select-none",
+                  isSelected 
+                    ? "text-slate-950 font-black" 
+                    : "text-slate-500 hover:text-slate-800 hover:-translate-y-0.5"
                 )}
               >
+                <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-indigo-600" : "text-slate-400")} />
+                <span>{cat.label}</span>
                 {isSelected && (
                   <motion.div
-                    layoutId="activeCategoryTab"
-                    className="absolute inset-0 z-[-1] rounded-sm bg-white border border-white/50 shadow-sm"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    layoutId="activeCategoryPill"
+                    className="absolute inset-0 z-[-1] rounded-lg bg-white border border-white/80 shadow-[0_3px_10px_rgba(0,0,0,0.05)]"
+                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
                   />
                 )}
-                {cat.substring(3)}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Selected Category Commands Buttons Grid */}
-      <div className="relative z-10 flex gap-2 flex-wrap flex-shrink-0">
+      {/* Selected Category Command Pills Grid - Linear/Vercel styling */}
+      <div className="relative z-10 flex gap-2.5 flex-wrap flex-shrink-0">
         {activeCategoryCommands.map((cmd) => {
           const isSelected = selectedKey === cmd.id;
+          const CmdIcon = cmd.icon || Code;
           return (
             <button
               key={cmd.id}
               onClick={() => setSelectedKey(cmd.id)}
               className={cn(
-                "rounded-lg border px-4 py-2.5 text-[10px] font-black font-mono transition-all duration-200 cursor-pointer shadow-sm relative overflow-hidden flex items-center gap-1.5",
+                "rounded-lg px-4 py-3 text-[10px] font-bold font-mono transition-all duration-200 cursor-pointer flex items-center gap-2 select-none border active:scale-97",
                 isSelected
-                  ? "border-slate-850 bg-slate-900 text-white shadow-lg shadow-indigo-950/10 glow-indigo"
-                  : "border-white/30 bg-white/40 text-slate-700 hover:bg-white/60 hover:shadow-md"
+                  ? "bg-gradient-to-r from-indigo-600 via-indigo-650 to-violet-600 border-indigo-500 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)] scale-[1.02]"
+                  : "bg-white/40 border-slate-200/50 hover:border-slate-350 text-slate-700 hover:text-slate-950 hover:bg-white/70 hover:-translate-y-0.5 hover:shadow-sm"
               )}
             >
+              <span className={cn("font-mono text-[9px] opacity-60 font-medium", isSelected ? "text-indigo-200" : "text-slate-400")}>$</span>
+              <CmdIcon className={cn("h-3.5 w-3.5", isSelected ? "text-white" : "text-slate-500")} />
               <span>{cmd.title}</span>
               {isSelected && (
                 <motion.span 
                   layoutId="activeDot"
-                  className="h-1.5 w-1.5 rounded-full bg-indigo-400"
+                  className="h-1.5 w-1.5 rounded-full bg-emerald-400 indicator-pulse"
                 />
               )}
             </button>
@@ -608,7 +633,7 @@ export default function App() {
           <div className="flex items-center justify-between flex-shrink-0 z-10 pb-2 border-b border-slate-300/10">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-black text-slate-800">{selectedCommand.title}</span>
-              <span className="text-[10px] text-slate-400 font-semibold truncate">({selectedCommand.subtitle})</span>
+              <span className="text-[10px] text-slate-405 font-semibold truncate">({selectedCommand.subtitle})</span>
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -782,7 +807,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
               initial={{ left: 0 }}
               animate={{ left: "100%" }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute h-2.5 w-2.5 rounded-full bg-indigo-400 -top-[4px] shadow-[0_0_8px_rgb(99,102,241)]"
+              className="absolute h-2.5 w-2.5 rounded-full bg-indigo-405 -top-[4px] shadow-[0_0_8px_rgb(99,102,241)]"
             />
           )}
         </div>
@@ -963,7 +988,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
         {/* Local laptop with file tree expansion */}
         <div className="flex flex-col items-center gap-2">
           <div className="rounded-xl bg-white/5 border border-white/15 p-3.5 shadow-xl relative">
-            <Laptop className="h-9 w-9 text-slate-355" />
+            <Laptop className="h-9 w-9 text-slate-350" />
             
             {isPlaying && step > 1 && (
               <motion.span 
@@ -985,7 +1010,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
                 <FolderGit2 className="h-3.5 w-3.5" /> โคลนสำเร็จ
               </motion.div>
             ) : (
-              <div className="text-slate-650">Empty Space</div>
+              <div className="text-slate-655 font-normal">Empty Space</div>
             )}
           </div>
         </div>
@@ -1514,7 +1539,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
           {isPlaying && (
             <>
               <motion.div
-                initial={isPush ? { left: "-40px" } : { right: "-40px" }}
+                initial={isPush ? { left: "-40px" } : { right: "-45px" }}
                 animate={isPush ? { left: "100%" } : { right: "100%" }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
                 className="absolute h-full w-[40px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
@@ -1743,7 +1768,7 @@ function AnimationSandbox({ type, isPlaying, step, params }) {
         {/* Server GitLab with tag landing */}
         <div className="flex flex-col items-center gap-2">
           <div className="rounded-xl border border-slate-800 bg-[#111827] p-3 flex flex-col items-center shadow-xl relative">
-            <Server className="h-8 w-8 text-indigo-550 animate-pulse" />
+            <Server className="h-8 w-8 text-indigo-555 animate-pulse" />
             <div className="h-5.5 w-5.5 rounded-full bg-indigo-600 flex items-center justify-center text-[7px] font-bold mt-2 relative">
               c2
               

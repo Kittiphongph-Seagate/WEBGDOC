@@ -1,0 +1,85 @@
+name: Auto Tag and Release Creation
+
+on:
+  push:
+    branches:
+      - '**' # ทำงานเมื่อมีการ Push เข้าสู่ทุกกิ่ง (All Branches)
+
+permissions:
+  contents: write # ให้สิทธิ์เขียนข้อมูลเพื่อปักหมุด Tag และสร้าง Release บน GitHub
+
+jobs:
+  verify-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './gitlab-tutorial/package-lock.json' # ชี้โฟลเดอร์สำหรับแคชเพื่อให้บิวต์เร็วขึ้น
+
+      # ========================================================
+      # เสาที่ 1: ตรวจสอบคุณภาพโค้ดและการสร้างบิลด์ (CI Verification)
+      # ========================================================
+      - name: Install Dependencies
+        run: |
+          cd gitlab-tutorial
+          npm ci
+
+      - name: Verify Build compiles
+        run: |
+          cd gitlab-tutorial
+          npm run build
+
+      # ========================================================
+      # ขั้นตอนสร้าง Git Tag และ ZIP แพ็คเกจโค้ด
+      # ========================================================
+      - name: Setup Thailand Timezone
+        run: sudo timedatectl set-timezone Asia/Bangkok
+
+      - name: Generate and Push Git Tag
+        run: |
+          # 1. จัดทำรูปแบบชื่อ Tag: [YYYYMMDD]-[BranchName]-[RunNumber]
+          CURRENT_DATE=$(date +'%Y%m%d')
+          CLEAN_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9.-]/_/g')
+          TAG_NAME="${CURRENT_DATE}-${CLEAN_BRANCH}-${{ github.run_number }}"
+          
+          # ส่งค่าชื่อ Tag ไปเก็บไว้ในสภาพแวดล้อมระบบเพื่อเอาไปใช้ต่อในขั้นตอนอื่น
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          echo "กำลังดำเนินการสร้าง Tag: ${TAG_NAME}"
+          
+          # 2. ตั้งค่าตัวตนผู้เขียนประวัติชั่วคราว
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # 3. สร้างและดัน Tag ขึ้น GitHub ปลายทาง
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+      - name: Create ZIP Archive of Code
+        run: |
+          echo "📦 เริ่มต้นกระบวนการบีบอัดโค้ดสำหรับแท็กเวอร์ชัน ${{ env.TAG_NAME }}..."
+          # บีบอัดไฟล์ทั้งหมดในโฟลเดอร์โดยยกเว้นโฟลเดอร์ไฟล์ประวัติ .git และไฟล์ขยะ node_modules
+          zip -r "release-${{ env.TAG_NAME }}.zip" . -x "*.git*" "*node_modules*"
+          echo "✓ บีบอัดไฟล์ release-${{ env.TAG_NAME }}.zip สำเร็จ!"
+
+      # ========================================================
+      # เสาที่ 3: ระบบจัดเก็บบันทึกประวัติถาวร (GitHub Release Creation)
+      # ========================================================
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.TAG_NAME }}
+          body: |
+            ## 🚀 บันทึกการปล่อยเวอร์ชันอัตโนมัติ (Automated Version Release)
+            * **Release Tag:** `${{ env.TAG_NAME }}`
+            * **กิ่งหลักที่รัน (Branch):** `${{ github.ref_name }}`
+            * **รหัสอ้างอิง Commit:** `${{ github.sha }}`
+            
+            *ดาวน์โหลดไฟล์ซอร์สโค้ด ZIP ที่บีบอัดสะอาดยกเว้นไฟล์ระบบขยะได้จากหน้ารายการ Assets ด้านล่าง*
+          files: release-${{ env.TAG_NAME }}.zip

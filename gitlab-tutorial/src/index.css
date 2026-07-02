@@ -1,0 +1,119 @@
+/* index.css */
+@import "tailwindcss";
+
+:root {
+  --gitlab-orange: #E24329;
+  --gitlab-purple: #6B4FBB;
+  --bg-primary: #0B0F19;
+  --bg-secondary: #161D30;
+  --border-color: #242F4C;
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --system-green: #10B981;
+  --system-red: #EF4444;
+  --system-blue: #3B82F6;
+  
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100vh;
+  font-family: var(--font-sans);
+  background-color: #0B0F19;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* Custom Scrollbar for developer style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+::-webkit-scrollbar-thumb {
+  background: #242F4C;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #313F65;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Professional Flat Panel Container */
+.dev-card {
+  background: #111827;
+  border: 1px solid #1F2937;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dev-card-active {
+  border-color: #38BDF8;
+}
+
+/* Active command light */
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--system-green);
+  box-shadow: 0 0 8px var(--system-green);
+}
+
+.indicator-dot-red {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--system-red);
+  box-shadow: 0 0 8px var(--system-red);
+}
+
+/* Pipeline Flow Animations */
+.pipe-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.pipe-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+  animation: pipe-flow 2.2s infinite linear;
+}
+
+@keyframes pipe-flow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Inputs & Focus systems */
+input, select, textarea {
+  transition: all 0.15s ease-in-out;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
